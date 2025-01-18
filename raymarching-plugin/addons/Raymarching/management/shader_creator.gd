@@ -539,5 +539,5 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 					prefix + "mod_" + param_name,
 					modifier.get(param_name)
 				)
-				if resource.manager.is_refractive:
-					material.set_shader_parameter(prefix + "refraction_index", resource.manager.refractive_index)
+		if resource.manager.is_refractive:
+			material.set_shader_parameter(prefix + "refraction_index", resource.manager.refractive_index)

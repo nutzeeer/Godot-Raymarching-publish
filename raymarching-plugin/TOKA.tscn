@@ -1,0 +1,61 @@
+[gd_scene load_steps=4 format=3 uid="uid://0ywx2r464byt"]
+
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_rkrn5"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_ff0d8"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_jqu20"]
+
+[node name="Node3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(-0.643429, 0, 0.765506, 0, 1, 0, -0.765506, 0, -0.643429, 0.242322, 2.89438, -6.57115)
+top_level = true
+script = ExtResource("1_rkrn5")
+fly_speed = 0.1
+fast_speed = 1.0
+sdf_influence = 9.0
+
+[node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
+script = ExtResource("2_ff0d8")
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.86332, 0, 0)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 0
+modifier_type = 0
+
+[node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.49668, 0)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 21
+modifier_type = 0
+
+[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.88988, 0.67598, 0)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 17
+modifier_type = 0
+
+[node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(-0.122545, 0.992463, 0, -0.992463, -0.122545, 0, 0, 0, 1, -19.8043, 0, 0)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 21
+modifier_type = 0
+
+[node name="ShapeManager5" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, -0.0770323, 0.997029, 0, -0.997029, -0.0770323, 0, 0, 7.10705)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 21
+modifier_type = 0
+
+[node name="ShapeManager6" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(0.626386, 0.777106, -0.0612141, 3.18507e-09, -0.0785287, -0.996912, -0.779513, 0.624452, -0.0491893, -18.5478, 0, -7.27332)
+top_level = true
+script = ExtResource("3_jqu20")
+shape_type = 21
+modifier_type = 0

@@ -3,7 +3,7 @@ extends Resource
 
 const BASE_PARAMETERS = [
 	{"name": "is_refractive", "type": TYPE_BOOL, "default": false},
-	{"name": "refractive_index", "type": TYPE_FLOAT, "default": 1.5, "min": 1.0}
+	{"name": "refractive_index", "type": TYPE_FLOAT, "default": 1.1, "min": 1.0}
 ]
 
 var property_values: Dictionary = {}
