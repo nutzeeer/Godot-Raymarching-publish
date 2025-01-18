@@ -184,6 +184,7 @@ func generate_shader() -> String:
 
 func generate_uniforms() -> String:
 	var code = """
+uniform sampler2D DEPTH_TEXTURE : hint_depth_texture, filter_linear_mipmap;
 uniform int MAX_STEPS;
 uniform float MAX_DISTANCE;
 uniform float SURFACE_DISTANCE;
@@ -416,6 +417,12 @@ void fragment() {
 	vec3 weird_uv = vec3(SCREEN_UV * 2.0 - 1.0, 0.0);
 	vec4 camera = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * vec4(weird_uv, 1.0);
 	
+	float depth_raw = texture(DEPTH_TEXTURE, SCREEN_UV).r;
+	vec4 upos = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth_raw, 1.0);
+	vec3 pixel_position = upos.xyz / upos.w;
+	float scene_depth = length(pixel_position);
+	
+	
 	vec3 ray_origin = (INV_VIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 ray_dir = normalize(camera.xyz);
 	vec3 current_rd = ray_dir;
@@ -437,7 +444,12 @@ void fragment() {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
 		float r = map_refractive(pos);
-		
+		/*
+		if (length(pos) < scene_depth) {
+			//discard;
+			break;
+		}
+		*/
 		// Simple refraction check - just look for crossing into refractive medium
 		if (r < current_accuracy) {
 			vec3 normal = getNormal(pos);

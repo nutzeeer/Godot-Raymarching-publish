@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="1_t3n3c"]
 [ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="2_jj8wy"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_gjoll"]
+[sub_resource type="BoxMesh" id="BoxMesh_07cp7"]
 
 [node name="Node3D" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
@@ -35,15 +35,17 @@ size = Vector3(1, 1, 1)
 roundness = 0.0
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 0.999789, 0.0205586, 0, -0.0205586, 0.999789, 0, 0, -2.57223)
+transform = Transform3D(1, 0, 0, 0, 0.999789, 0.0205586, 0, -0.0205586, 0.999789, 0, -1, 0.42777)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 21
+shape_type = 0
 modifier_type = 0
 is_refractive = false
 refractive_index = 1.1
-height = 0.0
+size = Vector3(1, 1, 1)
+roundness = 0.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.117114, 1.04373, -1.31735)
-mesh = SubResource("BoxMesh_gjoll")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.15933)
+top_level = true
+mesh = SubResource("BoxMesh_07cp7")

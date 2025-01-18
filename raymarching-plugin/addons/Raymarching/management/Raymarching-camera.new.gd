@@ -26,7 +26,7 @@ func _init() -> void:
 	
 
 func _ready() -> void:
-
+	#get_viewport().debug_draw = Viewport.DEBUG_DRAW_DEPTH
 	for child in get_children():
 		if child is ShapeManager:
 			if not child.shapes_loaded.is_connected(update_shape_nodes):
