@@ -33,7 +33,7 @@ class ShapeParameter:
 	func get_uniform_declaration() -> String:
 		match type:
 			TYPE_BOOL:
-				return "uniform bool " 
+				return "uniform bool "  # Add this case	
 			TYPE_FLOAT:
 				return "uniform float "
 			TYPE_INT:
@@ -77,11 +77,12 @@ class ShapeResource:
 			print("Manager:", manager.name)
 			transform = manager.global_transform
 			print("Transform:", transform)
-			if manager.current_shape:
-				print("Current shape:", manager.current_shape.get_class())
-				parameters = manager.get_current_shape_parameters_dict()
+			if shape:
+				print("Current shape:", shape)
+				print("Shape class:", shape.get_class())
+				parameters = shape.get_all_parameters()
 				print("Parameters:", parameters)
-				sdf_code = manager.current_shape.get_sdf_function()
+				sdf_code = shape.get_sdf_function()
 				print("SDF code:", sdf_code)
 				# Get modifier data
 			# Update modifier data

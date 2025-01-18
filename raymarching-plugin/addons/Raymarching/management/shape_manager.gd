@@ -234,49 +234,8 @@ func _on_properties_updated() -> void:
 	print("Properties updated")
 	#notify_property_list_changed() #commented to avoid list regeneration.
 
-# Add these methods to ShapeManager
-func _find_parameter(property_name: String) -> Dictionary:
-	if current_shape:
-		var all_params = current_shape.BASE_PARAMETERS + current_shape.get_shape_parameters()
-		for param in all_params:
-			if param.name == property_name:
-				return param
-	return {}
+# In shape_manager.gd
 
-func _validate_value(value: Variant, param: Dictionary) -> Variant:
-	var validated_value = value
-	
-	if "min" in param:
-		if param.type == TYPE_VECTOR3:
-			validated_value = Vector3(
-				max(value.x, param.get("min", -INF)),
-				max(value.y, param.get("min", -INF)),
-				max(value.z, param.get("min", -INF))
-			)
-		elif param.type == TYPE_VECTOR2:
-			validated_value = Vector2(
-				max(value.x, param.get("min", -INF)),
-				max(value.y, param.get("min", -INF))
-			)
-		else:
-			validated_value = max(value, param.get("min", -INF))
-			
-	if "max" in param:
-		if param.type == TYPE_VECTOR3:
-			validated_value = Vector3(
-				min(validated_value.x, param.get("max", INF)),
-				min(validated_value.y, param.get("max", INF)),
-				min(validated_value.z, param.get("max", INF))
-			)
-		elif param.type == TYPE_VECTOR2:
-			validated_value = Vector2(
-				min(validated_value.x, param.get("max", INF)),
-				min(validated_value.y, param.get("max", INF))
-			)
-		else:
-			validated_value = min(validated_value, param.get("max", INF))
-			
-	return validated_value
 # Update get_current_shape_sdf to include modifier
 func get_current_shape_sdf() -> String:
 	if current_shape:
@@ -427,7 +386,7 @@ func _update_inspector_properties() -> void:
 		print("Creating shape: ", shape_name)
 		var selected_shape = shape_classes[shape_name]
 		if selected_shape:
-			current_shape = selected_shape.new()  # This calls _init() which calls _setup_parameters()
+			current_shape = selected_shape.new()
 			current_shape.set_node_3d(self)  # Connect the Node3D
 			print("Shape created successfully")
 			properties_updated.emit()
@@ -482,6 +441,7 @@ func get_current_shape_parameters_dict() -> Dictionary:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_EDITOR_PRE_SAVE:
 		print("Editor pre-save notification")
+
 func _get(property: StringName) -> Variant:
 	# Handle transforms at ShapeManager level
 	match property:
@@ -499,16 +459,19 @@ func _get(property: StringName) -> Variant:
 			return current_modifier.has_p_modifier() if current_modifier else false
 		"has_color_surface_modifier":
 			return current_modifier.has_color_modifier() if current_modifier else false
+	   
 	
-	# Handle shape parameters - now direct access to property_values
+	# Handle shape-specific properties
 	if current_shape and current_shape.property_values.has(property):
-		return current_shape.property_values[property]
+		return current_shape._get(property)
 
-	# Handle modifier parameters
+	# Handle modifier-specific properties
 	if current_modifier and current_modifier.property_values.has(property):
 		return current_modifier.property_values[property]
 	
 	return null
+
+# In shape_manager.gd
 
 func _set(property: StringName, value: Variant) -> bool:
 	# Handle transforms at ShapeManager level
@@ -530,13 +493,10 @@ func _set(property: StringName, value: Variant) -> bool:
 			properties_updated.emit()
 			return true
 	
-	# Handle shape parameters - validate and set directly to property_values
+	# Handle shape parameters
 	if current_shape and current_shape.property_values.has(property):
-		var param = _find_parameter(property)
-		if param != null:
-			var validated_value = _validate_value(value, param)
-			current_shape.property_values[property] = validated_value
-			properties_updated.emit()
+		current_shape._set(property, value)
+		properties_updated.emit()
 		return true
 	
 	# Handle modifier parameters
@@ -547,6 +507,7 @@ func _set(property: StringName, value: Variant) -> bool:
 		return true
 	
 	return false
+
 # Add a debug method to verify parameter values
 func debug_modifier_params() -> void:
 	if current_modifier:

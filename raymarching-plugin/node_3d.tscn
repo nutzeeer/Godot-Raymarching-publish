@@ -19,4 +19,21 @@ sdf_influence = 9.0
 script = ExtResource("1_t3n3c")
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.80298, 0, 0)
+top_level = true
 script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 0
+is_refractive = false
+refractive_index = 1.5
+size = Vector3(1, 1, 1)
+roundness = 0.0
+
+[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 23
+modifier_type = 0
+is_refractive = true
+refractive_index = 5.0
+radius = 0.5
