@@ -32,6 +32,8 @@ class ShapeParameter:
 	# Convert GDScript types to GLSL uniform declarations
 	func get_uniform_declaration() -> String:
 		match type:
+			TYPE_BOOL:
+				return "uniform bool "  # Add this case	
 			TYPE_FLOAT:
 				return "uniform float "
 			TYPE_INT:
@@ -425,59 +427,41 @@ void fragment() {
 	*/
 	
 	float t = 0.0;
-	float current_accuracy = 0.0;
-	float pixel_scale = 1.0 / min(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y); //accuracy falloff with distance.
+	float current_accuracy = 0.0;  // Start at 0 like original
+	float pixel_scale = 1.0 / min(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
 	bool hit = false;
 	vec3 hit_normal;
 	vec3 hit_pos;
-	float refzone = 0.0; 
-	float inside = 0.0;
-	float prevd = 0.0;
-	float sign = 0.0; //entering exiting tracker
 
-	
 	for (int i = 0; i < MAX_STEPS; i++) {
 		vec3 pos = ray_origin + current_rd * t;
-		refzone = current_accuracy * 2.0;
-		inside = current_accuracy / 2.0;
-		
 		float d = map(pos);
 		float r = map_refractive(pos);
 		
-		sign = prevd * d; //evaluates negative at boundary layer
-
-		
-		if (r < refzone) { //refraction zone
-			if (r < current_accuracy) { //refraction hit
-				if (d < 0.0) {t += current_accuracy -d; //stepping definitely inside and using the negative result negatively to step forward.
-				continue;}
-				// In refractive zone - calculate refraction
-				vec3 normal = getNormal(pos);  // Could optimize to only use refractive shapes
-				if (sign<0.0){
-"""
-
+		// Simple refraction check - just look for crossing into refractive medium
+		if (r < current_accuracy) {
+			vec3 normal = getNormal(pos);
+	"""
 	# Add dynamic refraction handling
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.manager.is_refractive:
-			code += """                current_rd = calculate_refraction(current_rd, normal, shape%s_refraction_index);
+			code += """        current_rd = calculate_refraction(current_rd, normal, shape%s_refraction_index);
 	""" % id
-
-	code += """                t += d + current_accuracy;  // Step inside the shape
-				}
-				continue;
-
-				}
-		} else if (d < current_accuracy) {
-			// Surface hit (only when not in refractive zone)
+	code += """        t += current_accuracy * 2.0;  // Step a bit more to get inside
+			current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update accuracy
+			continue;
+		}
+		
+		if (d < current_accuracy) {
 			hit = true;
 			hit_pos = pos;
 			hit_normal = getNormal(pos);
 			break;
 		}
-		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;
+		
 		t += d;
-		prevd = d;
+		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update at end like original
 		if (t > MAX_DISTANCE) break;
 	}
 	

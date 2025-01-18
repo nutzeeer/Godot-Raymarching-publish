@@ -22,11 +22,6 @@ var active_modifiers: Dictionary = {}  # shape_id -> [active_modifiers]
 var current_modifier: GeneralModifierBase = null  # Changed base class
 var modifier_type: int = 0 : set = _set_modifier_type
 
-# At the top with other properties
-@export_group("Refraction Settings")
-@export var is_refractive: bool = false: set = set_is_refractive
-@export var refractive_index: float = 1.5: set = set_refractive_index
-
 func _init() -> void:
 	print("ShapeManager _init called")
 	top_level = true
@@ -270,10 +265,11 @@ func get_current_shape_sdf() -> String:
 
 # Add method to get all shader-relevant data
 func get_shader_data() -> Dictionary:
+	var params = get_current_shape_parameters_dict()
 	return {
 		"shape": {
 			"sdf": get_current_shape_sdf(),
-			"parameters": get_current_shape_parameters_dict()
+			"parameters": params
 		},
 		"modifier": {
 			"d_template": current_modifier.get_d_modifier_template() if current_modifier else "",
@@ -282,8 +278,8 @@ func get_shader_data() -> Dictionary:
 			"parameters": get_modifier_parameters()
 		},
 		"refraction": {
-			"enabled": is_refractive,
-			"index": refractive_index
+			"enabled": params["is_refractive"],
+			"index": params["refractive_index"]
 		}
 	}
 	
@@ -375,15 +371,6 @@ func _create_parameter_dict(param: Dictionary) -> Dictionary:
 	
 	return property_info
 	
-	# Add setter functions
-func set_is_refractive(value: bool) -> void:
-	is_refractive = value
-	shape_changed.emit()  # This triggers shader rebuild
-
-func set_refractive_index(value: float) -> void:
-	refractive_index = max(0.0, value)  # Can't have refractive index below 1
-	properties_updated.emit() #not requiring shader rebuild for update
-
 func _update_inspector_properties() -> void:
 	print("\n=== _update_inspector_properties ===")
 	print("Current shape type: ", shape_type)

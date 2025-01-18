@@ -32,7 +32,7 @@ func _ready() -> void:
 			if not child.shapes_loaded.is_connected(update_shape_nodes):
 				child.shapes_loaded.connect(update_shape_nodes)
 	update_shape_nodes()
-	$AnimationPlayer.play("new_animation_2")
+	#$AnimationPlayer.play("new_animation_2")
 	if Engine.is_editor_hint():
 		pass
 

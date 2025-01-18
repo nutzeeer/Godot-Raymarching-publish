@@ -2,7 +2,8 @@ class_name ShapeBase
 extends Resource
 
 const BASE_PARAMETERS = [
-	# Any non-transform base parameters would go here. Transform used from Node3D.
+	{"name": "is_refractive", "type": TYPE_BOOL, "default": false},
+	{"name": "refractive_index", "type": TYPE_FLOAT, "default": 1.5, "min": 1.0}
 ]
 
 var property_values: Dictionary = {}
@@ -63,6 +64,14 @@ func _set(property: StringName, value: Variant) -> bool:
 		var param = _find_parameter(property)
 		if param != null:
 			property_values[property] = _validate_value(value, param)
+			# Special handling for refractive properties after validation
+			match property:
+				"is_refractive":
+					if node_3d:
+						node_3d.shape_changed.emit()
+				"refractive_index":
+					if node_3d:
+						node_3d.properties_updated.emit()
 			return true
 	return false
 
