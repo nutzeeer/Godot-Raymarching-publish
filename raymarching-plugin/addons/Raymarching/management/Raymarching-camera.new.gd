@@ -23,6 +23,7 @@ func _init() -> void:
 	_setup_mesh()
 	_setup_material()
 	shader_generator = ShaderGenerator.new()
+	
 
 func _ready() -> void:
 
@@ -31,6 +32,7 @@ func _ready() -> void:
 			if not child.shapes_loaded.is_connected(update_shape_nodes):
 				child.shapes_loaded.connect(update_shape_nodes)
 	update_shape_nodes()
+	$AnimationPlayer.play("new_animation_2")
 	if Engine.is_editor_hint():
 		pass
 

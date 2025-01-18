@@ -1,0 +1,80 @@
+[gd_scene load_steps=8 format=3 uid="uid://c4d3eb444c57f"]
+
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_vms4b"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_4c1ma"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_32hvp"]
+
+[sub_resource type="Animation" id="Animation_xif3n"]
+length = 0.001
+step = 180.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:power")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [-8.0]
+}
+
+[sub_resource type="Animation" id="Animation_mmjl7"]
+resource_name = "new_animation"
+loop_mode = 1
+step = 180.0
+
+[sub_resource type="Animation" id="Animation_jrdgi"]
+resource_name = "new_animation_2"
+length = 180.0
+step = 180.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:power")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(10, 180),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [-8.0, 16.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_75md2"]
+_data = {
+"RESET": SubResource("Animation_xif3n"),
+"new_animation": SubResource("Animation_mmjl7"),
+"new_animation_2": SubResource("Animation_jrdgi")
+}
+
+[node name="Node3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2.5, 0, -0.5)
+top_level = true
+script = ExtResource("1_vms4b")
+fly_speed = 0.1
+fast_speed = 1.0
+sdf_influence = 9.0
+
+[node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
+script = ExtResource("2_4c1ma")
+max_steps = 10000
+surface_distance = 0.011109
+normal_precision = 0.0061804
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera"]
+root_node = NodePath("")
+libraries = {
+"": SubResource("AnimationLibrary_75md2")
+}
+playback_auto_capture_duration = 0.0
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+top_level = true
+script = ExtResource("3_32hvp")
+shape_type = 12
+modifier_type = 0
