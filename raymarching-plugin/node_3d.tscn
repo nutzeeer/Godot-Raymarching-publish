@@ -1,14 +1,40 @@
-[gd_scene load_steps=4 format=3 uid="uid://biwidmcd3kww"]
+[gd_scene load_steps=7 format=3 uid="uid://biwidmcd3kww"]
 
 [ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_5clfm"]
 [ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="1_t3n3c"]
 [ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="2_jj8wy"]
 
+[sub_resource type="Animation" id="Animation_mmjl7"]
+resource_name = "new_animation"
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../..")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0.466667, 1, 2.31592, 0, -0.135367)
+
+[sub_resource type="Animation" id="Animation_xif3n"]
+length = 0.001
+tracks/0/type = "position_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../..")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array(0, 1, 2.31592, 0, -0.135367)
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_75md2"]
+_data = {
+"RESET": SubResource("Animation_xif3n"),
+"new_animation": SubResource("Animation_mmjl7")
+}
+
 [node name="Node3D" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
 
 [node name="Node3D" type="Node3D" parent="."]
-transform = Transform3D(0.70887, 0, 0.70534, 0, 1, 0, -0.70534, 0, 0.70887, 2.92995, 1.1114, 3.14025)
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 2.31592, 0, -0.135367)
 top_level = true
 script = ExtResource("1_5clfm")
 fly_speed = 0.1
@@ -17,48 +43,20 @@ sdf_influence = 9.0
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
-
-[node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(2.4965, 5.32907e-15, -1.66357, -1.5103, -1.25779, -2.26649, -0.697474, 2.7236, -1.04669, 0, 3.27411, 3.10521)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 17
-modifier_type = 1
-radius = 1.0
-thickness = 0.25
-has_D_result_modifier = true
-has_local_p_modifier = false
-has_color_surface_modifier = false
-wave_amplitude = 0.12
-wave_frequency = 20.0
-wave_axis = Vector3(0, 1, 1)
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera"]
-root_node = NodePath("../ShapeManager3")
-
-[node name="AnimatableBody3D" type="AnimatableBody3D" parent="Node3D/RaymarchCamera/AnimationPlayer"]
+max_steps = 310
+normal_precision = 0.0061804
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.5)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 14
+shape_type = 8
 modifier_type = 0
-height = 0.0
+power = 3.76
+iterations = 3
+bailout = 2.0
 
-[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.836791, -0.345848)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 0
-size = Vector3(1, 1, 1)
-roundness = 0.34
-
-[node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(-0.984427, 0.175796, 0, -0.175796, -0.984427, 0, 0, 0, 1, 0, 2.60594, -3.15483)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 4
-modifier_type = 0
-radius = 1.0
-height = 2.0
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera/ShapeManager"]
+libraries = {
+"": SubResource("AnimationLibrary_75md2")
+}

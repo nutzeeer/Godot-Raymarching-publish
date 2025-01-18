@@ -198,8 +198,15 @@ func generate_shape_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
 	var code = "\n// Shape ${id} uniforms\n"
 	code += generate_uniform_declaration(id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
-	for param_name in resource.parameters:
-		var param_value = resource.parameters[param_name]
+	
+	# Add parameters
+	var parameters = resource.parameters.duplicate()
+	# Add refraction index to parameters if shape is refractive
+	if resource.manager.is_refractive:
+		parameters["refraction_index"] = resource.manager.refractive_index
+		
+	for param_name in parameters:
+		var param_value = parameters[param_name]
 		var param = ShapeParameter.new(param_name, typeof(param_value), param_value)
 		code += generate_uniform_declaration(id, param_name, param)
 	
@@ -269,7 +276,24 @@ float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
 	}
 	return result;
 }
+
+
+// Refraction calculation using Snell's law
+vec3 calculate_refraction(vec3 incident, vec3 normal, float ior) {
+	float cos_i = clamp(dot(normal, incident), -1.0, 1.0);
+	float eta = (cos_i < 0.0) ? ior : 1.0/ior;
+	cos_i = abs(cos_i);
+	
+	float k = 1.0 - eta * eta * (1.0 - cos_i * cos_i);
+	if (k < 0.0) {
+		// Total internal reflection
+		return reflect(incident, normal);
+	}
+	
+	return eta * incident + (eta * cos_i - sqrt(k)) * normal;
+}
 """
+
 
 func generate_sdf_functions() -> String:
 	var code = ""
@@ -322,6 +346,50 @@ float map(vec3 p) {
 	code += """    return final_distance;
 }
 """
+
+ # Add refractive map
+	code += """
+float map_refractive(vec3 p) {
+	float final_distance = MAX_DISTANCE;
+"""
+	
+	# Only loop through refractive shapes
+	for id in shape_resources:
+		var resource = shape_resources[id]
+		if resource.manager.get_current_shape() and resource.manager.is_refractive:
+			code += """
+	{
+"""
+			# Use same p modifications as regular map
+			if resource.modifier_templates.p_template:
+				code += "        // Space modification\n"
+				var processed_p_template = resource.modifier_templates.p_template
+				for param_name in resource.modifier_parameters:
+					var uniform_name = "shape%s_mod_%s" % [id, param_name]
+					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
+				code += "        vec3 modified_p = " + processed_p_template + ";\n"
+				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % id
+			else:
+				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % id
+			
+			# Calculate base SDF
+			code += "        float d = " + resource.manager.get_current_shape().get_sdf_call() + ";\n"
+			
+			# Apply SDF modifications
+			if resource.modifier_templates.d_template:
+				code += "        // SDF modification\n"
+				var processed_d_template = resource.modifier_templates.d_template
+				for param_name in resource.modifier_parameters:
+					var uniform_name = "shape%s_mod_%s" % [id, param_name]
+					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
+				code += "        " + processed_d_template + "\n"
+			
+			code += "        final_distance = min(final_distance, d);\n"
+			code += "    }\n"
+	
+	code += """    return final_distance;
+}
+"""
 	return code
 
 func get_shape_function_name(resource: ShapeResource) -> String:
@@ -347,6 +415,7 @@ void fragment() {
 	
 	vec3 ray_origin = (INV_VIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 ray_dir = normalize(camera.xyz);
+	vec3 current_rd = ray_dir;
 	
 	/*
 	// Apply modifiers
@@ -360,33 +429,62 @@ void fragment() {
 	bool hit = false;
 	vec3 hit_normal;
 	vec3 hit_pos;
+	float refzone = 0.0; 
+	float inside = 0.0;
+	float prevd = 0.0;
+	float sign = 0.0; //entering exiting tracker
+
 	
 	for (int i = 0; i < MAX_STEPS; i++) {
-		vec3 pos = ray_origin + ray_dir * t;
-		//pos = apply_modifiers(pos, RayModifiers);
+		vec3 pos = ray_origin + current_rd * t;
+		refzone = current_accuracy * 2.0;
+		inside = current_accuracy / 2.0;
 		
-		float dist = map(pos);
-	
+		float d = map(pos);
+		float r = map_refractive(pos);
 		
-		if (dist < current_accuracy) {
+		sign = prevd * d; //evaluates negative at boundary layer
+
+		
+		if (r < refzone) { //refraction zone
+			if (r < current_accuracy) { //refraction hit
+				if (d < 0.0) {t += current_accuracy -d; //stepping definitely inside and using the negative result negatively to step forward.
+				continue;}
+				// In refractive zone - calculate refraction
+				vec3 normal = getNormal(pos);  // Could optimize to only use refractive shapes
+				if (sign<0.0){
+"""
+
+	# Add dynamic refraction handling
+	for id in shape_resources:
+		var resource = shape_resources[id]
+		if resource.manager.is_refractive:
+			code += """                current_rd = calculate_refraction(current_rd, normal, shape%s_refraction_index);
+	""" % id
+
+	code += """                t += d + current_accuracy;  // Step inside the shape
+				}
+				continue;
+
+				}
+		} else if (d < current_accuracy) {
+			// Surface hit (only when not in refractive zone)
 			hit = true;
 			hit_pos = pos;
 			hit_normal = getNormal(pos);
 			break;
 		}
-		
 		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;
-		t+=dist;
-		if (t > MAX_DISTANCE) {
-			break;
-		}
+		t += d;
+		prevd = d;
+		if (t > MAX_DISTANCE) break;
 	}
 	
 	vec3 camera_rotation;
 camera_rotation.x = atan(INV_VIEW_MATRIX[1][2], INV_VIEW_MATRIX[2][2]);
 camera_rotation.y = -asin(INV_VIEW_MATRIX[0][2]);
 camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
-	
+	//hit = true;
 	if (hit) {
 		ALPHA = 1.0;
 		ALBEDO = hit_normal * 0.5 + 0.5;
@@ -408,7 +506,7 @@ camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 		vec3 light_dir = normalize(vec3(1.0, 1.0, -1.0));
 		float diffuse = max(0.0, dot(hit_normal, light_dir));
 		float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
-		
+		//ALBEDO *= current_accuracy*10.0;
 		ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
@@ -456,3 +554,5 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 					prefix + "mod_" + param_name,
 					modifier.get(param_name)
 				)
+				if resource.manager.is_refractive:
+					material.set_shader_parameter(prefix + "refraction_index", resource.manager.refractive_index)

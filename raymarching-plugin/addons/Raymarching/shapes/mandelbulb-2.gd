@@ -3,7 +3,7 @@ class_name Mandelbulb2
 extends ShapeBase
 
 const SHAPE_PARAMETERS = [
-	{"name": "power", "type": TYPE_FLOAT, "default": 8.0, "min": 0.0, "max": 20.0},
+	{"name": "power", "type": TYPE_FLOAT, "default": 8.0, "min": -8.0, "max": 20.0},
 	{"name": "iterations", "type": TYPE_INT, "default": 15, "min": 0, "max": 50},
 	{"name": "bailout", "type": TYPE_FLOAT, "default": 2.0, "min": 1.0, "max": 10.0}
 ]
