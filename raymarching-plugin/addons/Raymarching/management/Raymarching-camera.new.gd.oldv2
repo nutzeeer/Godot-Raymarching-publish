@@ -1,0 +1,399 @@
+@tool
+extends Camera3D
+class_name RaymarchCamera
+#new
+
+class ShapeResource:
+	extends RefCounted  # Make it reference counted
+	var shape_manager: ShapeManager        # Reference to shape node
+	var material: ShaderMaterial           # Shape-specific shader material
+	var parameters: Dictionary             # Current shape parameters
+	var sdf_code: String                  # Shape's SDF function code
+	func update_from_shape():
+		var shape = shape_manager.get_current_shape()
+		if shape:
+			parameters = shape.get_all_parameters()
+			sdf_code = shape.get_sdf_function()
+
+# Store shape resources by node ID for quick lookup
+var shape_resources: Dictionary = {}  # node_id -> ShapeResource
+
+# Internal resources
+var _mesh: ImmediateMesh
+var _mesh_instance: MeshInstance3D
+var _material: ShaderMaterial
+var _resource: ShapeResource  # Store as member variable
+
+# Shape management
+var shape_manager: ShapeManager
+
+
+# Raymarching parameters
+@export_group("Raymarching Settings")
+@export var max_steps: int = 100
+@export var max_distance: float = 1000.0
+@export var surface_distance: float = 0.01
+@export var normal_precision: float = 0.01
+# Modifier handling
+var sdf_return_modifier: Dictionary
+# Add initialization of for_loop_modifier at class level
+var for_loop_modifier: RaymarchModifiers = RaymarchModifiers.new()
+
+func _init() -> void:
+	_mesh = ImmediateMesh.new()
+	_mesh_instance = MeshInstance3D.new()
+	_mesh_instance.mesh = _mesh
+	_mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_mesh_instance)
+	
+	_material = ShaderMaterial.new()
+	_resource = ShapeResource.new()
+	_setup_shader()  # Single function, like working code
+	_mesh_instance.material_override = _material
+	setup_shape_manager()
+	update_shape_nodes()
+
+func _setup_shader() -> void:
+	_mesh.clear_surfaces()
+	_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	_mesh.surface_add_vertex(Vector3(-1, -1, 0))
+	_mesh.surface_add_vertex(Vector3(3, -1, 0))
+	_mesh.surface_add_vertex(Vector3(-1, 3, 0))
+	_mesh.surface_end()
+	
+	_mesh_instance.position = Vector3(0, 0, -1)
+	
+	var shader = Shader.new()
+	shader.code = generate_shader_code(_resource)
+	_material.shader = shader
+	update_shader_parameters(_resource)
+
+
+
+func _ready() -> void:
+	update_shape_nodes()
+	
+	# Called when child nodes change
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_CHILD_ORDER_CHANGED:
+		update_shape_nodes()
+		
+func update_shape_nodes() -> void:
+	# Clear old resources for removed nodes
+	var current_nodes = {}
+	
+	# Iterate through child nodes
+	for child in get_children():
+		if child is ShapeManager:
+			var node_id = child.get_instance_id()
+			current_nodes[node_id] = true
+			
+			# Create or update resource
+			if not shape_resources.has(node_id):
+				var resource = ShapeResource.new()
+				resource.shape_manager = child
+				resource.material = ShaderMaterial.new()
+				shape_resources[node_id] = resource
+			
+			# Update shape resource
+			update_shape_resource(node_id)
+	
+	# Remove resources for deleted nodes
+	for node_id in shape_resources.keys():
+		if not current_nodes.has(node_id):
+			shape_resources.erase(node_id)
+
+func update_shape_resource(node_id: int) -> void:
+	var resource = shape_resources[node_id]
+	var shape = resource.shape_manager.get_current_shape()
+	
+	if shape:
+		resource.parameters = shape.get_all_parameters()
+		resource.sdf_code = shape.get_sdf_function()
+		
+		# Update shader
+		var shader = Shader.new()
+		shader.code = generate_shader_code(resource)
+		
+		# Debug output with shape identification
+		print("\n=== Shader for shape %s ===" % shape.get_class())
+		print(shader.code)
+		
+		resource.material.shader = shader
+		update_shader_parameters(resource)
+
+func setup_shape_manager() -> void:
+	shape_manager = ShapeManager.new()
+	add_child(shape_manager)
+	print("Connecting shape manager signals")
+	shape_manager.shape_changed.connect(_on_shape_changed)
+	shape_manager.properties_updated.connect(_on_properties_updated)
+	
+func update_shader() -> void:
+	var shader = Shader.new()
+	var shader_code = generate_shader_code(_resource)  # Use same member variable
+	print("\n=== Generated Shader Code ===")
+	print(shader_code)
+	
+	shader.code = shader_code  # Add this line
+	
+	# First set shader to null to force clean recreation
+	_material.shader = null
+	# Then assign new shader
+	_material.shader = shader
+	
+	# Debug registered uniforms
+	print("\n=== Registered Shader Uniforms ===")
+	var uniforms = shader.get_shader_uniform_list()
+	for uniform in uniforms:
+		print(uniform)
+	
+	update_shader_parameters(_resource)
+		
+func set_shader_param_safe(param_name: String, value) -> void:
+	if not _material or not _material.shader:
+		return
+	var uniforms = _material.shader.get_shader_uniform_list()
+	if uniforms.any(func(u): return u.name == param_name):
+		_material.set_shader_parameter(param_name, value)
+	else:
+		print("WARNING: Attempted to set non-existent shader parameter: ", param_name)
+
+func generate_shader_code(resource: ShapeResource) -> String:
+	var code = """shader_type spatial;
+render_mode unshaded;
+
+// Transform uniforms
+uniform vec3 position;
+uniform vec3 rotation;
+uniform vec3 scale;
+
+uniform int max_steps;
+uniform float max_distance;
+uniform float surface_distance;
+uniform float normal_precision;
+uniform sampler2D DEPTH_TEXTURE : hint_depth_texture, filter_linear_mipmap;
+"""
+
+	# Add shape's SDF function first
+	if resource.sdf_code:
+		code += "\n" + resource.sdf_code + "\n"
+	else:
+		# Add default sphere SDF if no shape
+		code += """
+float sdSphere(vec3 p, float radius) {
+	return length(p) - radius;
+}
+"""
+
+	# Add the map function with transforms
+	code += generate_map_function(resource)
+
+	# Add the rest of the shader code
+	code += """
+vec3 getNormal(vec3 p) {
+	float eps = normal_precision;
+	vec3 n;
+	n.x = map(p + vec3(eps, 0.0, 0.0)) - map(p - vec3(eps, 0.0, 0.0));
+	n.y = map(p + vec3(0.0, eps, 0.0)) - map(p - vec3(0.0, eps, 0.0));
+	n.z = map(p + vec3(0.0, 0.0, eps)) - map(p - vec3(0.0, 0.0, eps));
+	return normalize(n);
+}
+
+void vertex() {
+	POSITION = vec4(VERTEX, 1.0);
+}
+
+void fragment() {
+	vec3 weird_uv = vec3(SCREEN_UV * 2.0 - 1.0, 0.0);
+	vec4 camera = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * vec4(weird_uv, 1.0);
+	
+	vec3 ray_origin = (INV_VIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	vec3 ray_dir = normalize(camera.xyz);
+	
+	float t = 0.0;
+	bool hit = false;
+	vec3 hit_normal;
+	vec3 hit_pos;
+	
+	for (int i = 0; i < max_steps; i++) {
+		vec3 pos = ray_origin + ray_dir * t;
+		float dist = map(pos);
+		
+		if (dist < surface_distance) {
+			hit = true;
+			hit_pos = pos;
+			hit_normal = getNormal(pos);
+			break;
+		}
+		
+		t += dist;
+		
+		if (t > max_distance) {
+			break;
+		}
+	}
+	
+	if (hit) {
+		ALPHA = 1.0;
+		ALBEDO = hit_normal * 0.5 + 0.5;
+	} else {
+		discard;
+	}
+}
+"""
+	return code
+
+func generate_map_function(resource: ShapeResource) -> String:
+	if not resource.shape_manager:
+		print("No shape manager")
+		return """float map(vec3 p) {
+	vec3 localP = p - position;
+	// [transform code]
+	return sdSphere(localP, 1.0);
+}"""
+		
+	var shape = resource.shape_manager.get_current_shape()
+	if not shape:
+		print("No current shape")
+		return """float map(vec3 p) {
+	vec3 localP = p - position;
+	// [transform code]
+	return sdSphere(localP, 1.0);
+}"""
+	
+	# Get the correct SDF function name based on shape class
+	var function_name = "sd" + shape.get_class()
+	
+	# Get parameters from shape
+	var params = shape.get_all_parameters()
+	var param_str = ""
+	
+	for param_name in params:
+		if param_name not in ["position", "rotation", "scale"]:
+			if param_str != "":
+				param_str += ", "
+			param_str += str(params[param_name])
+	
+	return """float map(vec3 p) {
+	vec3 localP = p - position;
+	
+	float cx = cos(rotation.x);
+	float sx = sin(rotation.x);
+	float cy = cos(rotation.y);
+	float sy = sin(rotation.y);
+	float cz = cos(rotation.z);
+	float sz = sin(rotation.z);
+	
+	vec2 temp = localP.xy;
+	localP.x = temp.x * cz - temp.y * sz;
+	localP.y = temp.x * sz + temp.y * cz;
+	
+	temp = localP.xz;
+	localP.x = temp.x * cy + temp.y * sy;
+	localP.z = -temp.x * sy + temp.y * cy;
+	
+	temp = localP.yz;
+	localP.y = temp.x * cx - temp.y * sx;
+	localP.z = temp.x * sx + temp.y * cx;
+	
+	localP = localP / scale;
+	
+	return %s(localP%s);
+}""" % [function_name.to_lower(), ", " + param_str if param_str else ""]
+
+func update_shader_parameters(resource: ShapeResource) -> void:
+	if not _material:
+		return
+	
+		# Uncomment and fix the parameter updates
+		if shape_manager and shape_manager.get_current_shape():
+			var params = shape_manager.get_current_shape_parameters_dict()
+			for param_name in params:
+				set_shader_param_safe(param_name, params[param_name])
+	# Camera/Raymarching parameters
+	_material.set_shader_parameter("max_steps", max_steps)
+	_material.set_shader_parameter("max_distance", max_distance)
+	_material.set_shader_parameter("surface_distance", surface_distance)
+	_material.set_shader_parameter("normal_precision", normal_precision)
+	
+	# Transform parameters
+	_material.set_shader_parameter("position", global_position)  # Changed to global_position
+	_material.set_shader_parameter("rotation", rotation)
+	_material.set_shader_parameter("scale", scale)
+	
+	
+	## For loop modifiers - Initialize with defaults if null
+	#var loop_params = for_loop_modifier.to_shader_params() if for_loop_modifier else {
+		#"ro_mul": Vector3.ONE,
+		#"rd_mul": Vector3.ONE,
+		#"pos_mul": Vector3.ONE,
+		#"surf_mul": 1.0,
+		#"max_mul": 1.0,
+		#"ro_add": Vector3.ZERO,
+		#"rd_add": Vector3.ZERO,
+		#"pos_add": Vector3.ZERO,
+		#"surf_add": 0.0,
+		#"max_add": 0.0
+	#}
+	#
+	#for param_name in loop_params:
+		#_material.set_shader_parameter(param_name, loop_params[param_name])
+	#
+	# Shape parameters - Only if shape exists
+	if shape_manager and shape_manager.get_current_shape():
+		var params = shape_manager.get_current_shape_parameters_dict()
+		for param_name in params:
+			if param_name not in ["position", "rotation", "scale"]:  # Avoid duplicates
+				_material.set_shader_parameter(param_name, params[param_name])
+	#
+	## SDF return line parameters - Only if modifier exists and has parameters
+	#if sdf_return_modifier and sdf_return_modifier.has("parameters"):
+		#for param_name in sdf_return_modifier.parameters:
+			#_material.set_shader_parameter(param_name, sdf_return_modifier.parameters[param_name])
+
+
+func set_sdf_return_modifier(index: int) -> void:
+	sdf_return_modifier = SDFReturnLineModifiers.get_modifier(index)
+	update_shader()
+
+func update_sdf_modifier_parameter(param_name: String, value: Variant) -> void:
+	if param_name in sdf_return_modifier.parameters:
+		sdf_return_modifier.parameters[param_name] = value
+		update_shader_parameters(_resource)
+
+# For Loop modifier methods
+func set_for_loop_modifier(modifier_params: Dictionary) -> void:
+	for_loop_modifier.ro_mul = modifier_params.get("ro_mul", Vector3.ONE)
+	for_loop_modifier.rd_mul = modifier_params.get("rd_mul", Vector3.ONE)
+	for_loop_modifier.pos_mul = modifier_params.get("pos_mul", Vector3.ONE)
+	for_loop_modifier.surf_mul = modifier_params.get("surf_mul", 1.0)
+	for_loop_modifier.max_mul = modifier_params.get("max_mul", 1.0)
+	for_loop_modifier.ro_add = modifier_params.get("ro_add", Vector3.ZERO)
+	for_loop_modifier.rd_add = modifier_params.get("rd_add", Vector3.ZERO)
+	for_loop_modifier.pos_add = modifier_params.get("pos_add", Vector3.ZERO)
+	for_loop_modifier.surf_add = modifier_params.get("surf_add", 0.0)
+	for_loop_modifier.max_add = modifier_params.get("max_add", 0.0)
+	
+	if for_loop_modifier.validate():
+		update_shader_parameters(_resource)
+		
+		
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		update_shader_parameters(_resource)
+
+
+# Shape manager callbacks
+func _on_shape_changed(_new_shape_type: int):
+	print("Shape changed signal received")
+	update_shader()
+
+func _on_properties_updated():
+	print("Properties updated signal received")
+	update_shader_parameters(_resource)
+
+func _exit_tree() -> void:
+	for resource in shape_resources.values():
+		resource.material.shader = null
+	shape_resources.clear()

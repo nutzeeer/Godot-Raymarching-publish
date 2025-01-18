@@ -1,0 +1,139 @@
+pixelated smart
+
+	// History buffers
+	#define HISTORY_SIZE 4
+	float prev_dists[HISTORY_SIZE];
+	float prev_steps[HISTORY_SIZE];
+	int history_index = 0;
+
+	// Directional tracking
+	float dir_momentum = 0.0;  // Tracks if we're consistently moving towards or away
+	float curve_estimate = 0.0;  // Tracks acceleration of distance changes
+
+	for (int i = 0; i < MAX_STEPS; i++) {
+		vec3 pos = ray_origin + ray_dir * t;
+		float dist = map(pos);
+		
+		if (dist < SURFACE_DISTANCE) {
+			hit = true;
+			hit_pos = pos;
+			hit_normal = getNormal(pos);
+			break;
+		}
+		
+		// Update history
+		float prev_dist = prev_dists[history_index];
+		float delta_dist = dist - prev_dist;
+		
+		// Update directional momentum (-1 to 1, negative means approaching surface)
+		dir_momentum = mix(dir_momentum, sign(delta_dist), 0.3);
+		
+		// Estimate curvature using last 3 points if available
+		if (i >= 2) {
+			float prev_delta = prev_dists[(history_index + HISTORY_SIZE - 1) % HISTORY_SIZE] - 
+							  prev_dists[(history_index + HISTORY_SIZE - 2) % HISTORY_SIZE];
+			curve_estimate = mix(curve_estimate, delta_dist - prev_delta, 0.3);
+		}
+		
+		// Calculate adaptive step size
+		float step_multiplier = 1.0;
+		
+		// Increase step size if consistently moving away from surfaces
+		if (dir_momentum > 0.5) step_multiplier *= 1.5;
+		
+		// Decrease step size if approaching surfaces
+		if (dir_momentum < -0.5) step_multiplier *= 0.8;
+		
+		// Adjust for curvature - slow down in highly curved regions
+		if (abs(curve_estimate) > 0.1) step_multiplier *= 0.7;
+		
+		// Calculate average rate of change from history
+		float avg_lipschitz = 0.0;
+		float weight_sum = 0.0;
+		for (int j = 1; j < HISTORY_SIZE; j++) {
+			int idx = (history_index + HISTORY_SIZE - j) % HISTORY_SIZE;
+			int prev_idx = (idx + HISTORY_SIZE - 1) % HISTORY_SIZE;
+			float delta = abs(prev_dists[idx] - prev_dists[prev_idx]);
+			float step = prev_steps[idx];
+			if (step > 0.0) {
+				float weight = 1.0 / float(j);  // More recent samples weight more
+				avg_lipschitz += (delta / step) * weight;
+				weight_sum += weight;
+			}
+		}
+		
+		if (weight_sum > 0.0) {
+			avg_lipschitz /= weight_sum;
+			step_multiplier *= min(1.0 / avg_lipschitz, 2.0);
+		}
+		
+		// Apply final step
+		float step = dist * clamp(step_multiplier, 0.5, 2.0);
+		
+		// Update history
+		prev_dists[history_index] = dist;
+		prev_steps[history_index] = step;
+		history_index = (history_index + 1) % HISTORY_SIZE;
+		
+		t += step;
+		
+		if (t > MAX_DISTANCE) break;
+	}
+
+
+lipschitz simple smart
+
+	float prev_step = 0.0;
+	float lipschitz = 1.0; // Estimate of how fast the SDF changes
+
+	for (int i = 0; i < MAX_STEPS; i++) {
+		vec3 pos = ray_origin + ray_dir * t;
+		float dist = map(pos);
+		
+		if (dist < SURFACE_DISTANCE) {
+			hit = true;
+			hit_pos = pos;
+			hit_normal = getNormal(pos);
+			break;
+		}
+		
+		// Calculate how fast the distance is changing
+		float delta_dist = abs(dist - prev_dist);
+		float delta_t = prev_step;
+		if (delta_t > 0.0) {
+			// Update our estimate of how fast the SDF changes
+			lipschitz = max(delta_dist / delta_t, lipschitz);
+			
+			// Take a larger step if the SDF is changing slowly
+			float safe_multiplier = 1.0 / lipschitz;
+			dist *= min(safe_multiplier, 2.0); // Cap at 2x for stability
+		}
+		
+		prev_dist = dist;
+		prev_step = dist;
+		t += dist;
+		
+		if (t > MAX_DISTANCE) break;
+	}
+
+standard
+
+	for (int i = 0; i < MAX_STEPS; i++) {
+		vec3 pos = ray_origin + ray_dir * t;
+		//pos = apply_modifiers(pos, RayModifiers);
+		
+		float dist = map(pos);
+	
+		
+		if (dist < SURFACE_DISTANCE) {
+			hit = true;
+			hit_pos = pos;
+			hit_normal = getNormal(pos);
+			break;
+		}
+		
+		t+=dist;
+		if (t > MAX_DISTANCE) {
+			break;
+		}
+	}

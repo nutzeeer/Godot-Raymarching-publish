@@ -1,0 +1,18 @@
+Raymarching/
+└── shapes/
+    ├── shape_base.gd     # Base functionality/interface
+    ├── shape_template.gd # Template for new shapes
+    └── sphere.gd         # Sphere implementation
+└── management/
+	└── shader modifiers/         	# shape modifier information
+		-sdf return line modifiers.txt
+		-for loop modifiers.txt
+		-Results calculation modifiers.txt
+    ├── shader_creator.gd   	# Creates shader using shader template and shape files
+    ├── RayMarching-camera.gd 	# Raymarching node UI
+    └── Shape_manager.gd        # Shape node used by Raymarching node
+└── return_line_modifiers/
+    ├── return_line_modifier_base.gd
+    ├── return_line_modifier_template.gd
+    ├── twist_modifier.gd
+

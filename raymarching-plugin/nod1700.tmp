@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://biwidmcd3kww"]
+
+[ext_resource type="Script" path="res://plugin/management/shape_manager.gd" id="1_exnj1"]
+[ext_resource type="Script" path="res://plugin/management/temp_shader.gd" id="1_w8fut"]
+
+[node name="Node3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0205189, 0, 0)
+script = ExtResource("1_w8fut")
+max_steps = null
+max_distance = null
+surface_distance = null
+
+[node name="ShapeManager" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1)
+script = ExtResource("1_exnj1")
+shape_type = 3
+
+[node name="ShapeManager2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+script = ExtResource("1_exnj1")
+shape_type = 5

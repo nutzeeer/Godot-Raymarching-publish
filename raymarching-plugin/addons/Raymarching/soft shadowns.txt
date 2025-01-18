@@ -1,0 +1,92 @@
+alt schnell
+
+float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
+	float result = 1.0;
+	float t = min_t;
+	for(int i = 0; i < 256 && t < max_t; i++) {
+		float h = map(ro + rd * t);
+		if(h < 0.0001) return 0.0;
+		result = min(result, k * h / t);
+		t += h;
+	}
+	return result;
+}
+
+neu genau
+
+float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
+    float result = 1.0;
+    float ph = 1e10; // Previous height, initialized large
+    float t = min_t;
+    
+    for(int i = 0; i < 256 && t < max_t; i++) {
+        float h = map(ro + rd * t);
+        if(h < 0.001) return 0.0;
+        
+        // y is the estimation of closest approach to surface
+        float y = h*h/(2.0*ph);
+        // d is the perpendicular distance to the light ray
+        float d = sqrt(h*h-y*y);
+        result = min(result, k*d/max(0.0,t-y));
+        ph = h;
+        
+        t += h;
+    }
+    return result;
+}
+
+hybrid
+
+float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
+    float result = 1.0;
+    float ph = 1e10;
+    float t = min_t;
+    
+    for(int i = 0; i < 256 && t < max_t; i++) {
+        float h = map(ro + rd * t);
+        if(h < 0.001) return 0.0;
+        
+        // Use simpler calculation for far distances
+        if(t > 10.0) {
+            result = min(result, k * h / t);
+        } else {
+            float y = h*h/(2.0*ph);
+            float d = sqrt(h*h-y*y);
+            result = min(result, k*d/max(0.0,t-y));
+        }
+        ph = h;
+        t += h;
+    }
+    return result;
+}
+
+updated hybrid
+
+float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
+    float result = 1.0;
+    float ph = 1e10;
+    float t = min_t;
+    
+    for(int i = 0; i < 256 && t < max_t; i++) {
+        vec3 p = ro + rd * t;
+        float precision = SURFACE_DISTANCE * length(p) * 0.5;
+        float h = map(p);
+        
+        if(h < precision) return 0.0;
+        
+        // Use simpler calculation for far distances
+        if(t > 10.0) {
+            float dynamic_k = k * precision/SURFACE_DISTANCE;
+            result = min(result, dynamic_k * h / t);
+        } else {
+            float y = h*h/(2.0*ph);
+            float d = sqrt(h*h-y*y);
+            float dynamic_k = k * precision/SURFACE_DISTANCE;
+            result = min(result, dynamic_k*d/max(precision,t-y));
+        }
+        
+        ph = h;
+        t += max(h, precision);
+    }
+    return result;
+}

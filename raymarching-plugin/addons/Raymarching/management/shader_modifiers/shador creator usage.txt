@@ -1,0 +1,7 @@
+this needs to be added to the shader creator for return line modifications:
+
+# Example usage
+var modifier = SDFReturnLineModifiers.get_modifier(selected_index)
+var params = modifier.parameters.duplicate()
+params.parent_shape = "parentSDF" # Replace with actual parent SDF value
+var return_line = SDFReturnLineModifiers.apply_parameters(modifier.template, params)

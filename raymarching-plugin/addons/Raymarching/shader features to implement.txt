@@ -1,0 +1,27 @@
+1.Geometry
+  └─ Shape Type 
+      ├─ [Shape-specific parameters appear here dynamically]
+      └─ (e.g., radius for sphere, size for box, scale?)
+-general settings: (position, rotation)
+-boolean operations: mixing or manipulating other objects/child nodes.
+
+2.settings for return line (how the sdf function is used. selectable settings and editable code. for example a calculation that only returns the object surface instead of a signed distance field. direct math multipliers applicable through return line edit).
+p modifier (return line modifier dual use, with usage flag. vorher, nachher, beides?
+3. settings for the Raymarching for loop results calcultation. (selectable settings and editable code. for example having the ray origin, or direction multiplied by how close it is to the center of an object. gravity and lensing..)
+
+Material Override
+  └─ Material (surface operations)
+
+Visibility
+  └─ Visibility Flags (for use as invisible object)
+
+Raymarching Settings
+  ├─ Max Steps
+  ├─ Ray Step Size
+  ├─ Surface Distance
+  └─ Normal Precision
+
+sdf generator nach paper, aus vertex formen.
+physik mit 4D sdf integralen mit physikparametern. dann ableitung für effizienz. darstellungsschritte geteilt durch fps. vllt. mit motion blur mit berechnungen zwischen den bildern.
+
+scary sine wave mit amplitude nahe 1 hat gruselschatten. bei 1 ist der bildschirm voll. horror game mit abstandsparameter. wave frequency auch.

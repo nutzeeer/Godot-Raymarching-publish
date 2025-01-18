@@ -1,0 +1,82 @@
+class_name ShapeBase
+extends Resource
+
+const BASE_PARAMETERS = [
+	{"name": "position", "type": TYPE_VECTOR3, "default": Vector3.ZERO},
+	{"name": "rotation", "type": TYPE_VECTOR3, "default": Vector3.ZERO},
+	{"name": "scale", "type": TYPE_VECTOR3, "default": Vector3.ONE, "min": 0.0001}
+]
+
+var property_values: Dictionary = {}
+@export var material: Material
+
+func _init():
+	_setup_parameters()
+
+func _setup_parameters() -> void:
+	var all_params = BASE_PARAMETERS + get_shape_parameters()
+	for param in all_params:
+		property_values[param.name] = param.default
+
+func _get(property: StringName) -> Variant:
+	if property in property_values:
+		return property_values[property]
+	return null
+
+func _set(property: StringName, value: Variant) -> bool:
+	if property in property_values:
+		var param = _find_parameter(property)
+		if param != null:
+			property_values[property] = _validate_value(value, param)
+			return true
+	return false
+
+func _find_parameter(property_name: String) -> Dictionary:
+	var all_params = BASE_PARAMETERS + get_shape_parameters()
+	for param in all_params:
+		if param.name == property_name:
+			return param
+	return {}
+
+func _validate_value(value: Variant, param: Dictionary) -> Variant:
+	var validated_value = value
+	
+	if "min" in param:
+		if param.type == TYPE_VECTOR3:
+			validated_value = Vector3(
+				max(value.x, param.min),
+				max(value.y, param.min),
+				max(value.z, param.min)
+			)
+		elif param.type == TYPE_VECTOR2:
+			validated_value = Vector2(
+				max(value.x, param.min),
+				max(value.y, param.min)
+			)
+		else:
+			validated_value = max(value, param.min)
+			
+	if "max" in param:
+		if param.type == TYPE_VECTOR3:
+			validated_value = Vector3(
+				min(validated_value.x, param.max),
+				min(validated_value.y, param.max),
+				min(validated_value.z, param.max)
+			)
+		elif param.type == TYPE_VECTOR2:
+			validated_value = Vector2(
+				min(validated_value.x, param.max),
+				min(validated_value.y, param.max)
+			)
+		else:
+			validated_value = min(validated_value, param.max)
+			
+	return validated_value
+
+# Virtual method for shapes to override with their specific parameters
+func get_shape_parameters() -> Array:
+	return []
+
+func get_sdf_function() -> String:
+	push_error("Base class method called")
+	return ""

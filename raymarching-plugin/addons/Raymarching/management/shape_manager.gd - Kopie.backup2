@@ -1,0 +1,232 @@
+@tool
+extends Node
+class_name ShapeManager
+
+const ParameterDef = ShapeBase.ParameterDef
+
+signal shape_changed(new_shape_type: int)
+signal properties_updated()
+
+var shape_classes: Dictionary = {}
+var current_shape: ShapeBase = null
+var shape_type: int = 0 : set = _set_shape_type
+
+func _ready() -> void:
+    if Engine.is_editor_hint():
+        # Connect the signals
+        shape_changed.connect(_on_shape_changed)
+        properties_updated.connect(_on_properties_updated)
+        _load_shape_classes()
+
+func _enter_tree() -> void:
+    print("Node entered tree")
+    if Engine.is_editor_hint():
+        print("Loading shapes in editor...")
+        _load_shape_classes()
+
+func _load_shape_classes() -> void:
+    print("Loading shape classes...")
+    shape_classes.clear()
+    
+    var dir = DirAccess.open("res://plugin/shapes/")
+    if !dir:
+        push_error("Failed to open shapes directory: res://plugin/shapes/")
+        return
+    
+    print("Successfully opened shapes directory")
+    dir.list_dir_begin()
+    var file_name = dir.get_next()
+    
+    while file_name != "":
+        if file_name.ends_with(".gd") and file_name != "shape_base.gd" and file_name != "shape_template.gd":
+            var shape_name = file_name.get_basename()
+            print("Found shape file: ", file_name)
+            var script = load("res://plugin/shapes/" + file_name)
+            if script:
+                shape_classes[shape_name] = script
+                print("Loaded shape: ", shape_name)
+            else:
+                push_error("Failed to load script: " + file_name)
+        file_name = dir.get_next()
+    
+    dir.list_dir_end()
+    print("Final loaded shapes: ", shape_classes.keys())
+    properties_updated.emit()
+
+# In shape_manager.gd
+
+func _set_shape_type(value: int) -> void:
+    print("\n=== Setting shape type ===")
+    print("Old value: ", shape_type)
+    print("New value: ", value)
+    
+    # Clear out the old shape
+    if current_shape:
+        current_shape = null
+    
+    shape_type = value
+    shape_changed.emit(value)
+    
+    # Force property list update
+    notify_property_list_changed()
+
+func _on_shape_changed(new_type: int) -> void:
+    print("Shape changed to: ", new_type)
+    _update_shape_properties()
+
+func _on_properties_updated() -> void:
+    print("Properties updated")
+    notify_property_list_changed()
+
+func _get_property_list() -> Array:
+    print("\n=== _get_property_list ===")
+    var properties = []
+    
+    var shape_keys = shape_classes.keys()
+    if !shape_keys.is_empty():
+        properties.append({
+            "name": "shape_type",
+            "type": TYPE_INT,
+            "usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_SCRIPT_VARIABLE,
+            "hint": PROPERTY_HINT_ENUM,
+            "hint_string": ",".join(shape_keys)
+        })
+        print("Added shape_type property")
+    
+    if current_shape:
+        print("Current shape: ", current_shape.get_class())
+        var params = current_shape.get_parameter_definitions()
+        if params.is_empty():
+            print("WARNING: No parameters found for shape!")
+        
+        for param in params:
+            print("Processing parameter: ", param.name)
+            var property_info = {
+                "name": param.name,
+                "type": param.type,
+                "usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_SCRIPT_VARIABLE
+            }
+            
+            if param.min_value > -INF or param.max_value < INF:
+                property_info["hint"] = PROPERTY_HINT_RANGE
+                property_info["hint_string"] = "%f,%f" % [param.min_value, param.max_value]
+            
+            properties.append(property_info)
+            print("Added property: ", param.name)
+    else:
+        print("No current shape set!")
+    
+    return properties
+
+func _update_shape_properties() -> void:
+    print("\n=== _update_shape_properties ===")
+    print("Current shape type: ", shape_type)
+    
+    var shape_keys = shape_classes.keys()
+    if shape_keys.is_empty():
+        push_warning("No shape classes loaded")
+        return
+        
+    if shape_type >= 0 and shape_type < shape_keys.size():
+        var shape_name = shape_keys[shape_type]
+        print("Creating shape: ", shape_name)
+        var selected_shape = shape_classes[shape_name]
+        if selected_shape:
+            current_shape = selected_shape.new()
+            print("New shape size: ", current_shape.size)  # Add this debug line
+            print("Shape created successfully")
+            properties_updated.emit()
+
+func _validate_parameter_value(param: ParameterDef, value: Variant) -> bool:
+    if typeof(value) != param.type:
+        return false
+    
+    match param.type:
+        TYPE_FLOAT, TYPE_INT:
+            return value >= param.min_value and value <= param.max_value
+        TYPE_VECTOR2, TYPE_VECTOR3:
+            if param.min_value > -INF:
+                # Check each component against min value
+                for component in value:
+                    if component < param.min_value:
+                        return false
+    return true
+
+# Get the current shape instance
+func get_current_shape() -> ShapeBase:
+    return current_shape
+
+# Get all available parameters for the current shape
+func get_current_shape_parameters() -> Array[ShapeBase.ParameterDef]:
+    if current_shape:
+        return current_shape.get_parameter_definitions()
+    return []
+
+# Get the SDF function for the current shape
+func get_current_shape_sdf() -> String:
+    if current_shape:
+        return current_shape.get_sdf_function()
+    return ""
+
+# Get all shape parameters as a dictionary
+func get_current_shape_parameters_dict() -> Dictionary:
+    var params = {}
+    if current_shape:
+        var param_defs = current_shape.get_parameter_definitions()
+        for param in param_defs:
+            params[param.name] = current_shape.get(param.name)
+    return params
+
+# Set a parameter value with validation
+func set_parameter_value(param_name: String, value: Variant) -> bool:
+    if current_shape:
+        var params = current_shape.get_parameter_definitions()
+        for param in params:
+            if param.name == param_name:
+                if _validate_parameter_value(param, value):
+                    current_shape.set(param_name, value)
+                    print("Parameter ", param_name, " set to ", value)
+                    return true
+                break
+    return false
+
+# Reset a parameter to its default value
+func reset_parameter_to_default(param_name: String) -> bool:
+    if current_shape:
+        var params = current_shape.get_parameter_definitions()
+        for param in params:
+            if param.name == param_name:
+                current_shape.set(param_name, param.default_value)
+                print("Parameter ", param_name, " reset to default: ", param.default_value)
+                return true
+    return false
+
+# Reset all parameters to their default values
+func reset_all_parameters() -> void:
+    if current_shape:
+        var params = current_shape.get_parameter_definitions()
+        for param in params:
+            current_shape.set(param.name, param.default_value)
+        print("All parameters reset to defaults")
+        properties_updated.emit()
+
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_EDITOR_PRE_SAVE:
+        print("Editor pre-save notification")
+
+func _get(property: StringName) -> Variant:
+    if current_shape:
+        var properties = current_shape.get_property_list()
+        for prop in properties:
+            if prop["name"] == property:
+                return current_shape.get(property)
+    return null
+
+func _set(property: StringName, value: Variant) -> bool:
+    if current_shape:
+        var properties = current_shape.get_property_list()
+        for prop in properties:
+            if prop["name"] == property:
+                current_shape.set(property, value)
+                return true
+    return false

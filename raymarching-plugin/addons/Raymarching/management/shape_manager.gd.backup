@@ -1,0 +1,126 @@
+@tool
+extends Node
+class_name ShapeManager
+
+var shape_classes: Dictionary = {}
+var current_shape: ShapeBase = null
+var shape_type: int = 0
+
+# Based on sphere.gd and shape_base.gd, these are all the properties that should be exposed
+var exposed_properties = [
+    "radius",      # from sphere.gd
+    "position",    # from shape_base.gd
+    "rotation",    # from shape_base.gd
+    "scale",       # from shape_base.gd
+    "material"     # from shape_base.gd
+]
+
+func _enter_tree() -> void:
+    print("Node entered tree")
+    if Engine.is_editor_hint():
+        print("Loading shapes in editor...")
+        _load_shape_classes()
+
+func _load_shape_classes() -> void:
+    print("Loading shape classes...")
+    shape_classes.clear()
+    
+    var dir = DirAccess.open("res://plugin/shapes/")
+    if !dir:
+        push_error("Failed to open shapes directory: res://plugin/shapes/")
+        return
+    
+    print("Successfully opened shapes directory")
+    dir.list_dir_begin()
+    var file_name = dir.get_next()
+    
+    while file_name != "":
+        if file_name.ends_with(".gd") and file_name != "shape_base.gd" and file_name != "shape_template.gd":
+            var shape_name = file_name.get_basename()
+            print("Found shape file: ", file_name)
+            var script = load("res://plugin/shapes/" + file_name)
+            if script:
+                shape_classes[shape_name] = script
+                print("Loaded shape: ", shape_name)
+            else:
+                push_error("Failed to load script: " + file_name)
+        file_name = dir.get_next()
+    
+    dir.list_dir_end()
+    print("Final loaded shapes: ", shape_classes.keys())
+    notify_property_list_changed()
+
+func _get_property_list() -> Array:
+    var properties = []
+    
+    if shape_classes.is_empty():
+        _load_shape_classes()
+    
+    var shape_keys = shape_classes.keys()
+    if !shape_keys.is_empty():
+        properties.append({
+            "name": "shape_type",
+            "type": TYPE_INT,
+            "usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_SCRIPT_VARIABLE,
+            "hint": PROPERTY_HINT_ENUM,
+            "hint_string": ",".join(shape_keys)
+        })
+    
+    if current_shape:
+        for prop in exposed_properties:
+            if prop in current_shape:
+                var value = current_shape.get(prop)
+                var type = typeof(value)
+                
+                var property_info = {
+                    "name": prop,
+                    "type": type,
+                    "usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_SCRIPT_VARIABLE
+                }
+                
+                # Add specific hints for vector properties
+                if type == TYPE_VECTOR3:
+                    property_info["hint"] = PROPERTY_HINT_NONE
+                
+                properties.append(property_info)
+    
+    return properties
+
+func _update_shape_properties() -> void:
+    var shape_keys = shape_classes.keys()
+    if shape_keys.is_empty():
+        push_warning("No shape classes loaded")
+        return
+        
+    if shape_type >= 0 and shape_type < shape_keys.size():
+        var shape_name = shape_keys[shape_type]
+        var selected_shape = shape_classes[shape_name]
+        if selected_shape:
+            current_shape = selected_shape.new()
+            print("Created new shape: ", shape_name)
+            notify_property_list_changed()
+           
+
+func _set(property: StringName, value) -> bool:
+    if property == "shape_type" and value != shape_type:
+        shape_type = value
+        _update_shape_properties()
+        return true
+    elif current_shape and property in current_shape:
+        # Handle property setting for the current shape
+        if property in exposed_properties:
+            current_shape.set(property, value)
+            return true
+    return false
+
+func _get(property: StringName):
+    if property == "shape_type":
+        return shape_type
+    elif current_shape and property in current_shape:
+        if property in exposed_properties:
+            return current_shape.get(property)
+    return null
+
+# Optional: Add a method to get the current shape instance
+func get_current_shape() -> ShapeBase:
+    return current_shape

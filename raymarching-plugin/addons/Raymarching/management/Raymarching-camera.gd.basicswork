@@ -1,0 +1,148 @@
+@tool
+extends Camera3D
+class_name RaymarchingCamera
+
+# Reference to the generated mesh
+var _mesh: ImmediateMesh
+var _mesh_instance: MeshInstance3D
+
+# Raymarching parameters
+@export_group("Raymarching Settings")
+@export var max_steps: int = 100
+@export var max_distance: float = 1000.0
+@export var surface_distance: float = 0.01
+@export var normal_precision: float = 0.01
+
+# Material for raymarching
+var _material: ShaderMaterial
+
+func _init() -> void:
+	_mesh = ImmediateMesh.new()
+	_mesh_instance = MeshInstance3D.new()
+	_mesh_instance.mesh = _mesh
+	_mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_mesh_instance)
+	
+	# Create the material and set up the shader
+	_material = ShaderMaterial.new()
+	_setup_shader()
+	_mesh_instance.material_override = _material
+
+func _setup_shader() -> void:
+	# Create a single triangle that covers the entire screen
+	_mesh.clear_surfaces()
+	_mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Create one large triangle that extends beyond the screen
+	_mesh.surface_add_vertex(Vector3(-1, -1, 0))  # Bottom-left
+	_mesh.surface_add_vertex(Vector3(3, -1, 0))   # Bottom-right (extended)
+	_mesh.surface_add_vertex(Vector3(-1, 3, 0))   # Top-left (extended)
+	
+	_mesh.surface_end()
+	
+	# Position the mesh instance in front of the camera
+	_mesh_instance.position = Vector3(0, 0, -1)
+	
+	# Set up the shader
+	var shader = Shader.new()
+	shader.code = _get_shader_code()
+	_material.shader = shader
+	
+	# Set initial shader parameters
+	_update_shader_parameters()
+
+func _get_shader_code() -> String:
+	return """
+	shader_type spatial;
+	render_mode unshaded;
+	
+	const float MAX_DISTANCE = 1000.0;
+	const float SURFACE_DISTANCE = 0.01;
+	
+	uniform int max_steps;
+	uniform float surface_distance;
+	uniform float normal_precision;
+	uniform sampler2D DEPTH_TEXTURE : hint_depth_texture, filter_linear_mipmap;
+	
+	float sdSphere(vec3 p) {
+		return length(p) - 2.0;
+	}
+	
+	float map(vec3 p) {
+		return sdSphere(p);
+	}
+	
+	vec3 getNormal(vec3 p) {
+		float eps = normal_precision;
+		vec3 n;
+		n.x = map(p + vec3(eps, 0.0, 0.0)) - map(p - vec3(eps, 0.0, 0.0));
+		n.y = map(p + vec3(0.0, eps, 0.0)) - map(p - vec3(0.0, eps, 0.0));
+		n.z = map(p + vec3(0.0, 0.0, eps)) - map(p - vec3(0.0, 0.0, eps));
+		return normalize(n);
+	}
+	
+	void vertex() {
+		POSITION = vec4(VERTEX, 1.0);
+	}
+	
+	void fragment() {
+		vec3 weird_uv = vec3(SCREEN_UV * 2.0 - 1.0, 0.0);
+		vec4 camera = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * vec4(weird_uv, 1.0);
+		
+		vec3 ray_origin = (INV_VIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+		vec3 ray_dir = normalize(camera.xyz);
+		
+		float t = 0.0;
+		bool hit = false;
+		vec3 hit_normal;
+		vec3 hit_pos;
+		
+		for (int i = 0; i < max_steps; i++) {
+			vec3 pos = ray_origin + ray_dir * t;
+			float dist = map(pos);
+			
+			if (dist < surface_distance) {
+				hit = true;
+				hit_pos = pos;
+				hit_normal = getNormal(pos);
+				break;
+			}
+			
+			t += dist;
+			
+			if (t > MAX_DISTANCE) {
+				break;
+			}
+		}
+		
+		if (hit) {
+			ALPHA = 1.0;
+			ALBEDO = hit_normal * 0.5 + 0.5;
+		} else {
+			discard;
+		}
+	}
+	"""
+
+func _update_shader_parameters() -> void:
+	if not _material:
+		return
+		
+	_material.set_shader_parameter("max_steps", max_steps)
+	_material.set_shader_parameter("surface_distance", surface_distance)
+	_material.set_shader_parameter("normal_precision", normal_precision)
+
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		_update_shader_parameters()
+
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_PREDELETE:
+			# Clean up resources
+			if _mesh:
+				_mesh.queue_free()
+			if _mesh_instance:
+				_mesh_instance.queue_free()
+			if _material:
+				_material.queue_free()

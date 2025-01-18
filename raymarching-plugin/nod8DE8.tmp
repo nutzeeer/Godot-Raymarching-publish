@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://biwidmcd3kww"]
+
+[ext_resource type="Script" path="res://plugin/management/Raymarching-camera.new.gd" id="1_e01tg"]
+[ext_resource type="Script" path="res://plugin/management/shape_manager.gd" id="1_exnj1"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="RaymarchCamera" type="Camera3D" parent="."]
+script = ExtResource("1_e01tg")
+
+[node name="ShapeManager" type="Node3D" parent="RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.75853)
+script = ExtResource("1_exnj1")
+shape_type = 7
+radius = 1.0
