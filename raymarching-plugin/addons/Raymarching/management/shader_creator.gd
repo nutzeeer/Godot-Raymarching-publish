@@ -84,15 +84,18 @@ class ShapeResource:
 				print("Parameters:", parameters)
 				sdf_code = shape.get_sdf_function()
 				print("SDF code:", sdf_code)
-				# Get modifier data
-			# Update modifier data
+				
 			# Update modifier data
 			var shader_data = manager.get_shader_data()
 			if manager.current_modifier:
 				modifier_templates = {
 					"d_template": shader_data.modifier.d_template,
 					"p_template": shader_data.modifier.p_template,
-					"color_template": shader_data.modifier.color_template
+					"color_template": shader_data.modifier.color_template,
+					"forloop_template": shader_data.modifier.forloop_template,
+					"utility_functions": shader_data.modifier.utility_functions,
+					"custom_map_name": shader_data.modifier.custom_map_name,
+					"custom_map_template": shader_data.modifier.custom_map_template
 				}
 				modifier_parameters = shader_data.modifier.parameters
 				print("Modifier parameters updated:", modifier_parameters)
@@ -102,7 +105,11 @@ class ShapeResource:
 				modifier_templates = {
 					"d_template": "",
 					"p_template": "",
-					"color_template": ""
+					"color_template": "",
+					"forloop_template": "",
+					"utility_functions": "",
+					"custom_map_name": "",
+					"custom_map_template": ""
 				}
 	
 	func _process(_delta: float) -> void:
@@ -170,7 +177,7 @@ func generate_shader() -> String:
 
 		
 	# Add map function
-	shader_code += generate_map_function()
+	shader_code += generate_all_maps()
 	
 	# Add utility functions
 	shader_code += generate_utility_functions()
@@ -205,10 +212,6 @@ func generate_shape_uniforms(id: int) -> String:
 	
 	# Add parameters
 	var parameters = resource.parameters.duplicate()
-	# Add refraction index to parameters if shape is refractive
-	if resource.manager.is_refractive:
-		parameters["refraction_index"] = resource.manager.refractive_index
-		
 	for param_name in parameters:
 		var param_value = parameters[param_name]
 		var param = ShapeParameter.new(param_name, typeof(param_value), param_value)
@@ -243,7 +246,7 @@ vec3 apply_modifiers(vec3 p, RayModifiers mods) {
 """.replace("${code}", code)
 
 func generate_utility_functions() -> String:
-	return """
+	var code = """
 vec3 getNormal(vec3 p) {
 	// Use smaller epsilon based on distance from point
 	float eps = NORMAL_PRECISION * length(p);
@@ -280,23 +283,19 @@ float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
 	}
 	return result;
 }
-
-
-// Refraction calculation using Snell's law
-vec3 calculate_refraction(vec3 incident, vec3 normal, float ior) {
-	float cos_i = clamp(dot(normal, incident), -1.0, 1.0);
-	float eta = (cos_i < 0.0) ? ior : 1.0/ior;
-	cos_i = abs(cos_i);
-	
-	float k = 1.0 - eta * eta * (1.0 - cos_i * cos_i);
-	if (k < 0.0) {
-		// Total internal reflection
-		return reflect(incident, normal);
-	}
-	
-	return eta * incident + (eta * cos_i - sqrt(k)) * normal;
-}
 """
+ # Collect all unique utility functions first
+	var utility_functions = {}  # Dictionary to store unique utility functions
+	for resource in shape_resources.values():
+		if resource.modifier_templates.get("utility_functions"):
+			utility_functions[resource.modifier_templates.utility_functions] = true
+	
+	# Add utility functions only once
+	for util_func in utility_functions:
+		code += util_func + "\n"
+  
+	return code
+
 
 
 func generate_sdf_functions() -> String:
@@ -305,97 +304,82 @@ func generate_sdf_functions() -> String:
 		if resource.sdf_code:
 			code += resource.sdf_code + "\n"
 	return code
-
-func generate_map_function() -> String:
-	var code = """
-float map(vec3 p) {
-	float final_distance = MAX_DISTANCE;
-"""
 	
+func generate_all_maps() -> String:
+	var shader_code = ""
+	
+	# Create groups for shapes by their special effects
+	var map_groups_by_effect: Dictionary = {}  # effect_map_name -> Array[ShapeResource]
+	var shapes_without_effects: Array = []     # Shapes without special effects
+	
+	# First pass: organize shapes by their special effects
 	for id in shape_resources:
-		var resource = shape_resources[id]
-		if resource.manager.get_current_shape():
-			# Start shape block
-			code += """
-	{
-"""
+		var shape = shape_resources[id]
+		if shape.modifier_templates.get("custom_map_name"):
+			var effect_map_name = shape.modifier_templates.custom_map_name
+			if !map_groups_by_effect.has(effect_map_name):
+				map_groups_by_effect[effect_map_name] = []
+			map_groups_by_effect[effect_map_name].append(shape)
+		else:
+			shapes_without_effects.append(shape)
+	
+	# Generate special effect maps first
+	for effect_map_name in map_groups_by_effect:
+		var shapes_with_effect = map_groups_by_effect[effect_map_name]
+		if shapes_with_effect.size() > 0:
+			# Get the map template from the first shape with this effect
+			var effect_map_template = shapes_with_effect[0].modifier_templates.get("custom_map_template", "")
+			shader_code += generate_map_function(effect_map_name, shapes_with_effect, effect_map_template)
+	
+	# Generate the standard map with all shapes
+	shader_code += generate_map_function("map", shape_resources.values())
+	
+	return shader_code
+
+func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String:
+	var template = effect_map_template
+	if template.is_empty():
+		template = """
+float ${MAP_NAME}(vec3 p) {
+	float final_distance = MAX_DISTANCE;
+	${SHAPES_CODE}
+	return final_distance;
+}"""
+
+	var shape_calculations = ""
+	for shape in shape_resources:
+		if shape.manager.get_current_shape():
+			shape_calculations += "    {\n"
+			
 			# Apply space (p) modifications first if any
-			if resource.modifier_templates.p_template:
-				code += "        // Space modification\n"
-				var processed_p_template = resource.modifier_templates.p_template
-				for param_name in resource.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [id, param_name]
+			if shape.modifier_templates.p_template:
+				shape_calculations += "        // Space modification\n"
+				var processed_p_template = shape.modifier_templates.p_template
+				for param_name in shape.modifier_parameters:
+					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
-				code += "        vec3 modified_p = " + processed_p_template + ";\n"
-				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % id
+				shape_calculations += "        vec3 modified_p = " + processed_p_template + ";\n"
+				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.manager.get_instance_id()
 			else:
-				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % id
+				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % shape.manager.get_instance_id()
 			
 			# Calculate base SDF
-			code += "        float d = " + resource.manager.get_current_shape().get_sdf_call() + ";\n"
+			shape_calculations += "        float d = " + shape.manager.get_current_shape().get_sdf_call() + ";\n"
 			
 			# Apply SDF (d) modifications if any
-			if resource.modifier_templates.d_template:
-				code += "        // SDF modification\n"
-				var processed_d_template = resource.modifier_templates.d_template
-				for param_name in resource.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [id, param_name]
+			if shape.modifier_templates.d_template:
+				shape_calculations += "        // SDF modification\n"
+				var processed_d_template = shape.modifier_templates.d_template
+				for param_name in shape.modifier_parameters:
+					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
 					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
-				code += "        " + processed_d_template + "\n"
+				shape_calculations += "        " + processed_d_template + "\n"
 			
 			# Store result
-			code += "        final_distance = min(final_distance, d);\n"
-			code += "    }\n"
+			shape_calculations += "        final_distance = min(final_distance, d);\n"
+			shape_calculations += "    }\n"
 	
-	code += """    return final_distance;
-}
-"""
-
- # Add refractive map
-	code += """
-float map_refractive(vec3 p) {
-	float final_distance = MAX_DISTANCE;
-"""
-	
-	# Only loop through refractive shapes
-	for id in shape_resources:
-		var resource = shape_resources[id]
-		if resource.manager.get_current_shape() and resource.manager.is_refractive:
-			code += """
-	{
-"""
-			# Use same p modifications as regular map
-			if resource.modifier_templates.p_template:
-				code += "        // Space modification\n"
-				var processed_p_template = resource.modifier_templates.p_template
-				for param_name in resource.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [id, param_name]
-					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
-				code += "        vec3 modified_p = " + processed_p_template + ";\n"
-				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % id
-			else:
-				code += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % id
-			
-			# Calculate base SDF
-			code += "        float d = " + resource.manager.get_current_shape().get_sdf_call() + ";\n"
-			
-			# Apply SDF modifications
-			if resource.modifier_templates.d_template:
-				code += "        // SDF modification\n"
-				var processed_d_template = resource.modifier_templates.d_template
-				for param_name in resource.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [id, param_name]
-					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
-				code += "        " + processed_d_template + "\n"
-			
-			code += "        final_distance = min(final_distance, d);\n"
-			code += "    }\n"
-	
-	code += """    return final_distance;
-}
-"""
-	return code
-
+	return template.replace("${MAP_NAME}", effect_map_name).replace("${SHAPES_CODE}", shape_calculations)
 func get_shape_function_name(resource: ShapeResource) -> String:
 	var shape = resource.manager.get_current_shape()
 	return "sd" + shape.get_class() if shape else "sdSphere"
@@ -443,27 +427,45 @@ void fragment() {
 	for (int i = 0; i < MAX_STEPS; i++) {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
-		float r = map_refractive(pos);
-		/*
-		if (length(pos) < scene_depth) {
+		
+		
+		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
 			//discard;
-			break;
-		}
-		*/
-		// Simple refraction check - just look for crossing into refractive medium
-		if (r < current_accuracy) {
-			vec3 normal = getNormal(pos);
-	"""
-	# Add dynamic refraction handling
+		//	break;
+		//}
+		
+		"""
+	# Create a dictionary to store unique for_loop templates
+	var for_loop_templates: Dictionary = {}
+	
+	# First pass: collect all unique for_loop templates and their parameters
 	for id in shape_resources:
 		var resource = shape_resources[id]
-		if resource.manager.is_refractive:
-			code += """        current_rd = calculate_refraction(current_rd, normal, shape%s_refraction_index);
-	""" % id
-	code += """        t += current_accuracy * 2.0;  // Step a bit more to get inside
-			current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update accuracy
-			continue;
-		}
+		if resource.modifier_templates.get("forloop_template"):
+			var template = resource.modifier_templates.forloop_template
+			if !for_loop_templates.has(template):
+				for_loop_templates[template] = []
+			for_loop_templates[template].append({
+				"id": id,
+				"parameters": resource.modifier_parameters
+			})
+	
+	# Second pass: add each unique for_loop template once
+	for template in for_loop_templates:
+		var shapes = for_loop_templates[template]
+		# Use parameters from first shape that uses this template
+		var first_shape = shapes[0]
+		var processed_template = template
+		for param_name in first_shape.parameters:
+			processed_template = processed_template.replace(
+				"{%s}" % param_name,
+				"shape%s_mod_%s" % [first_shape.id, param_name]
+			)
+		code += "        // For loop modification\n"
+		code += "        " + processed_template + "\n"
+
+	# Continue with existing code
+	code += """
 		
 		if (d < current_accuracy) {
 			hit = true;
@@ -551,5 +553,3 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 					prefix + "mod_" + param_name,
 					modifier.get(param_name)
 				)
-		if resource.manager.is_refractive:
-			material.set_shader_parameter(prefix + "refraction_index", resource.manager.refractive_index)

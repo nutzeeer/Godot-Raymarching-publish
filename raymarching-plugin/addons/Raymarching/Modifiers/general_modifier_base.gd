@@ -122,6 +122,10 @@ func has_p_modifier() -> bool:
 
 func has_color_modifier() -> bool:
 	return get_color_modifier_template() != ""
+	
+
+func has_forloop_modifier() -> bool:
+	return get_forloop_modifier_template() != ""
 
 # Virtual methods for modifiers to implement
 func get_modifier_parameters() -> Array:
@@ -135,6 +139,19 @@ func get_p_modifier_template() -> String:
 
 func get_color_modifier_template() -> String:
 	return ""
+
+func get_forloop_modifier_template() -> String:
+	return ""  # Base class returns empty string
+	
+	# general_modifier_base.gd
+func get_utility_functions() -> String:
+	return ""  # Base returns empty string
+
+func get_custom_map_name() -> String:
+	return ""  # Base returns empty string - no custom map needed
+
+func get_custom_map_template() -> String:
+	return ""  # Base returns empty string
 
 func get_all_parameters() -> Dictionary:
 	var params = {}

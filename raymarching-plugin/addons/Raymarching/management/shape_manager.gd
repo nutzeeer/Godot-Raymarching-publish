@@ -96,6 +96,7 @@ func _scan_modifier_directory(path: String) -> void:
 					"has_d_modifier": instance.has_d_modifier(),
 					"has_p_modifier": instance.has_p_modifier(),
 					"has_color_modifier": instance.has_color_modifier(),
+					"has_forloop_modifier": instance.has_forloop_modifier(),  # Add this line
 					"path": full_path
 				}
 				
@@ -198,14 +199,7 @@ func _set_modifier_type(value: int) -> void:
 func get_current_modifier() -> GeneralModifierBase:
 	return current_modifier
 
-func get_current_modifier_capabilities() -> Dictionary:
-	if current_modifier:
-		return {
-			"has_d_modifier": current_modifier.has_d_modifier(),
-			"has_p_modifier": current_modifier.has_p_modifier(),
-			"has_color_modifier": current_modifier.has_color_modifier()
-		}
-	return {}
+
 
 func get_modifier_templates() -> Dictionary:
 	if current_modifier:
@@ -226,7 +220,8 @@ func get_modifier_capabilities() -> Dictionary:
 		return {
 			"has_d_modifier": current_modifier.has_d_modifier(),
 			"has_p_modifier": current_modifier.has_p_modifier(),
-			"has_color_modifier": current_modifier.has_color_modifier()
+			"has_color_modifier": current_modifier.has_color_modifier(),
+			"has_forloop_modifier": current_modifier.has_forloop_modifier()  # Add this line
 		}
 	return {}
 
@@ -263,23 +258,21 @@ func get_current_shape_sdf() -> String:
 		return sdf
 	return ""
 
-# Add method to get all shader-relevant data
-func get_shader_data() -> Dictionary:
-	var params = get_current_shape_parameters_dict()
+func get_shader_data() -> Dictionary: 
 	return {
 		"shape": {
 			"sdf": get_current_shape_sdf(),
-			"parameters": params
+			"parameters": get_current_shape_parameters_dict()
 		},
 		"modifier": {
 			"d_template": current_modifier.get_d_modifier_template() if current_modifier else "",
 			"p_template": current_modifier.get_p_modifier_template() if current_modifier else "",
 			"color_template": current_modifier.get_color_modifier_template() if current_modifier else "",
+			"forloop_template": current_modifier.get_forloop_modifier_template() if current_modifier else "",
+			"utility_functions": current_modifier.get_utility_functions() if current_modifier else "",
+			"custom_map_name": current_modifier.get_custom_map_name() if current_modifier else "",
+			"custom_map_template": current_modifier.get_custom_map_template() if current_modifier else "",
 			"parameters": get_modifier_parameters()
-		},
-		"refraction": {
-			"enabled": params["is_refractive"],
-			"index": params["refractive_index"]
 		}
 	}
 	
@@ -341,6 +334,13 @@ func _get_property_list() -> Array:
 			"type": TYPE_BOOL,
 			"usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY,
 			"value": current_modifier.has_color_modifier()
+		})
+				# In _get_property_list(), add this with the other capability indicators
+		properties.append({
+			"name": "has_forloop_modifier",
+			"type": TYPE_BOOL,
+			"usage": PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY,
+			"value": current_modifier.has_forloop_modifier() if current_modifier else false
 		})
 		
 		# Add modifier parameters

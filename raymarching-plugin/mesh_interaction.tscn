@@ -29,10 +29,6 @@ top_level = true
 script = ExtResource("3_hd1pn")
 shape_type = 0
 modifier_type = 0
-is_refractive = false
-refractive_index = 1.1
-size = Vector3(1, 1, 1)
-roundness = 0.0
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 0.999789, 0.0205586, 0, -0.0205586, 0.999789, 0, -1, 0.42777)
@@ -40,10 +36,6 @@ top_level = true
 script = ExtResource("3_hd1pn")
 shape_type = 0
 modifier_type = 0
-is_refractive = false
-refractive_index = 1.1
-size = Vector3(1, 1, 1)
-roundness = 0.0
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.15933)

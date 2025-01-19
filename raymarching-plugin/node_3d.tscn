@@ -8,7 +8,7 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
 
 [node name="Node3D" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.36492)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56173, 0, 6.35165)
 top_level = true
 script = ExtResource("1_5clfm")
 fly_speed = 0.1
@@ -17,17 +17,39 @@ sdf_influence = 9.0
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
-max_steps = 1280
-surface_distance = 1.00029
-normal_precision = 0.0066668
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(-0.452902, 0, -0.89156, 0, 1, 0, 0.89156, 0, -0.452902, 0, 0, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 0
 modifier_type = 0
-is_refractive = false
-refractive_index = 1.1
 size = Vector3(1, 1, 1)
 roundness = 0.0
+
+[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55229, 0, 0)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 1
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = false
+has_forloop_modifier = null
+refraction_index = 1.5
+
+[node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.28824, 0, 0.501001)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 1
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = false
+has_forloop_modifier = null
+refraction_index = 1.5
