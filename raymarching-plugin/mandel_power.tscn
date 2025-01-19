@@ -1,0 +1,76 @@
+[gd_scene load_steps=7 format=3 uid="uid://gblxp7xqo2xq"]
+
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_fx4p5"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_soaiy"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_oajvw"]
+
+[sub_resource type="Animation" id="Animation_fvg8g"]
+resource_name = "bulbpower"
+length = 180.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ShapeManager:power")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 179.311),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [-8.0, 20.0]
+}
+
+[sub_resource type="Animation" id="Animation_vmwun"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ShapeManager:power")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [8.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_0mcl4"]
+_data = {
+"RESET": SubResource("Animation_vmwun"),
+"bulbpower": SubResource("Animation_fvg8g")
+}
+
+[node name="Node3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.36492)
+top_level = true
+script = ExtResource("1_fx4p5")
+fly_speed = 0.1
+fast_speed = 1.0
+sdf_influence = 9.0
+
+[node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
+script = ExtResource("2_soaiy")
+max_steps = 1280
+surface_distance = 1.00029
+normal_precision = 0.0066668
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(-0.690882, 0, -0.722967, 0, 1, 0, 0.722967, 0, -0.690882, 0, 0, 0)
+top_level = true
+script = ExtResource("3_oajvw")
+shape_type = 10
+modifier_type = 0
+is_refractive = false
+refractive_index = 1.1
+power = 8.0
+iterations = 15
+bailout = 2.115
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera"]
+libraries = {
+"": SubResource("AnimationLibrary_0mcl4")
+}

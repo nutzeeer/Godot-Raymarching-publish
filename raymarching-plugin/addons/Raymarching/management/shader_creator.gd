@@ -500,11 +500,11 @@ camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 		
 		
 		// Calculate lighting
-		vec3 light_dir = normalize(vec3(1.0, 1.0, -1.0));
-		//float diffuse = max(0.0, dot(hit_normal, light_dir));
-		//float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
+		vec3 light_dir = normalize(vec3(1.0, 1.0, 1.0));
+		float diffuse = max(0.0, dot(hit_normal, light_dir));
+		float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
 		//ALBEDO *= current_accuracy*10.0;
-		//ALBEDO *= (diffuse * shadow + 0.1);
+		ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
 		discard;
