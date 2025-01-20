@@ -358,7 +358,7 @@ float ${MAP_NAME}(vec3 p) {
 				for param_name in shape.modifier_parameters:
 					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
-				shape_calculations += "        vec3 modified_p = " + processed_p_template + ";\n"
+				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
 				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.manager.get_instance_id()
 			else:
 				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % shape.manager.get_instance_id()

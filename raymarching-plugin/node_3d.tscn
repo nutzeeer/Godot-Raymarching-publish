@@ -22,34 +22,13 @@ script = ExtResource("1_t3n3c")
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 0
-modifier_type = 0
-size = Vector3(1, 1, 1)
-roundness = 0.0
-
-[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55229, 0, 0)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 1
+modifier_type = 2
 size = Vector3(1, 1, 1)
 roundness = 0.0
 has_D_result_modifier = false
-has_local_p_modifier = false
+has_local_p_modifier = true
 has_color_surface_modifier = false
 has_forloop_modifier = null
-refraction_index = 1.5
-
-[node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.28824, 0, 0.501001)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 1
-size = Vector3(1, 1, 1)
-roundness = 0.0
-has_D_result_modifier = false
-has_local_p_modifier = false
-has_color_surface_modifier = false
-has_forloop_modifier = null
-refraction_index = 1.5
+twist_amount = 1.0
+twist_axis = Vector3(0, 1, 0)
+twist_center = Vector3(0, 0, 0)

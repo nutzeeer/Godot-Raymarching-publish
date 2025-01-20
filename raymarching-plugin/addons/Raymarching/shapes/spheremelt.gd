@@ -5,7 +5,7 @@ extends ShapeBase
 const SHAPE_PARAMETERS = [
 	{"name": "radius", "type": TYPE_FLOAT, "default": 1.0, "min": 0.0001},
 	{"name": "melt", "type": TYPE_FLOAT, "default": 0.0, "min": 0.0, "max": 1.0},
-	{"name": "drip_speed", "type": TYPE_FLOAT, "default": 1.0, "min": 0.1, "max": 5.0}
+	{"name": "drip_speed", "type": TYPE_FLOAT, "default": 1.0, "min": 0.1, "max": 15.0}
 ]
 
 func get_shape_parameters() -> Array:
