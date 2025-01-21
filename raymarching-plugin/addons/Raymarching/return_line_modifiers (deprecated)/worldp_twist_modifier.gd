@@ -1,5 +1,5 @@
 # twist_modifier.gd
-class_name TwistModifier
+class_name TwistModifierold
 extends ReturnLineModifierBase
 
 const MODIFIER_PARAMETERS = [

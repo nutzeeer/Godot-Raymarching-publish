@@ -171,6 +171,9 @@ func generate_shader() -> String:
 	// - Return line modifiers for SDF calculations
 	// See for_loop_modifiers.gd and sdf_return_line_modifiers.gd
 	"""
+	
+		# Add utility functions
+	shader_code += generate_utility_functions()
 		
 	# Add SDF functions from all shapes
 	shader_code += generate_sdf_functions()
@@ -179,8 +182,7 @@ func generate_shader() -> String:
 	# Add map function
 	shader_code += generate_all_maps()
 	
-	# Add utility functions
-	shader_code += generate_utility_functions()
+
 
 	# Add main shader code
 	shader_code += generate_main_code()

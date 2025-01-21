@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://j0xqsgt0mc"]
+
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_uo4lx"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_46nb0"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_2wjmf"]
+
+[node name="Node3D" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56173, 0, 6.35165)
+top_level = true
+script = ExtResource("1_uo4lx")
+fly_speed = 0.1
+fast_speed = 1.0
+sdf_influence = 9.0
+
+[node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
+script = ExtResource("2_46nb0")
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+top_level = true
+script = ExtResource("3_2wjmf")
+shape_type = 0
+modifier_type = 3
+has_D_result_modifier = false
+has_local_p_modifier = true
+has_color_surface_modifier = false
+has_forloop_modifier = null
+twist_amount = 10.0
+twist_axis = Vector3(0, 1, 1)
+twist_center = Vector3(0, 0, 0)
+falloff_distance = 2.066
