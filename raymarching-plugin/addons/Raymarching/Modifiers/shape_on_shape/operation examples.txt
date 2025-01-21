@@ -1,0 +1,37 @@
+Common shape operations in signed distance fields (SDFs) typically include:
+
+Traditional Boolean Operations:
+1. Union (Addition/OR) - Takes minimum distance between shapes
+2. Subtraction (Difference) - Negates one shape and takes maximum
+3. Intersection (AND) - Takes maximum distance between shapes
+4. Smooth Union/Blend - Smoothly interpolates between shapes
+5. Symmetric Difference (XOR) - Only areas where shapes don't overlap
+
+Advanced Mathematical Operations:
+1. Morphing - Interpolating between different shapes
+2. Multiplication/Division - Scaling effects based on distance fields
+3. Displacement - Using one shape's field to distort another
+4. Modulo - Creating repeating patterns
+5. Elongation - Extending shapes along axes
+6. Onion - Creating shell-like layers
+
+Creative Operations:
+1. Distance-based warping - One shape's field warps another
+2. Field multiplication - Multiplying distance fields for interesting effects
+3. Gradient operations - Using field gradients for deformation
+4. Fractal operations - Recursive application of operations
+5. Wave interference - Treating fields like waves and combining them
+6. Exponential/logarithmic combinations
+7. Trigonometric operations (sin, cos) on fields
+8. Noise-based distortion using distance fields
+
+For implementation, ShapeManagers could:
+1. Have a "parent_shape" reference
+2. Include an operation type enum
+3. Store operation parameters (blend factors, etc.)
+4. Generate appropriate GLSL code based on hierarchy
+5. Support operation chaining through the node tree
+
+This would allow for complex shape compositions through both traditional boolean operations and more experimental mathematical combinations.
+
+Would you like me to elaborate on any of these operations or show example GLSL implementations?
