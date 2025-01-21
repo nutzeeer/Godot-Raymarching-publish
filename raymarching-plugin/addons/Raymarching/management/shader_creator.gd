@@ -89,6 +89,7 @@ class ShapeResource:
 			var shader_data = manager.get_shader_data()
 			if manager.current_modifier:
 				modifier_templates = {
+					"pre_map_functions": shader_data.modifier.pre_map_functions,
 					"d_template": shader_data.modifier.d_template,
 					"p_template": shader_data.modifier.p_template,
 					"color_template": shader_data.modifier.color_template,
@@ -103,6 +104,7 @@ class ShapeResource:
 			else:
 				modifier_parameters.clear()
 				modifier_templates = {
+					"pre_map_functions": "",
 					"d_template": "",
 					"p_template": "",
 					"color_template": "",
@@ -172,9 +174,10 @@ func generate_shader() -> String:
 	// See for_loop_modifiers.gd and sdf_return_line_modifiers.gd
 	"""
 	
-		# Add utility functions
-	shader_code += generate_utility_functions()
-		
+
+
+	shader_code += generate_pre_map_functions()
+
 	# Add SDF functions from all shapes
 	shader_code += generate_sdf_functions()
 
@@ -182,7 +185,8 @@ func generate_shader() -> String:
 	# Add map function
 	shader_code += generate_all_maps()
 	
-
+		# Add utility functions
+	shader_code += generate_utility_functions()
 
 	# Add main shader code
 	shader_code += generate_main_code()
@@ -246,6 +250,19 @@ vec3 apply_modifiers(vec3 p, RayModifiers mods) {
 	return apply_modifier_vec3(p, mods.pos_add, mods.pos_mul);
 }
 """.replace("${code}", code)
+
+func generate_pre_map_functions() -> String:
+	var code = ""
+	for id in shape_resources:
+		var resource = shape_resources[id]
+		if resource.modifier_templates.get("pre_map_functions"):
+			var processed_template = resource.modifier_templates.pre_map_functions
+			# Process parameters
+			for param_name in resource.modifier_parameters:
+				var uniform_name = "shape%s_mod_%s" % [id, param_name]
+				processed_template = processed_template.replace("{%s}" % param_name, uniform_name)
+			code += processed_template + "\n"
+	return code
 
 func generate_utility_functions() -> String:
 	var code = """
@@ -493,22 +510,27 @@ camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 
 """
 	
+	# In generate_main_code()
 	# Apply color/surface modifications
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.modifier_templates.color_template:
 			code += "        // Surface modification for shape " + str(id) + "\n"
-			code += "        " + resource.modifier_templates.color_template + "\n"
-	
+			var processed_color = resource.modifier_templates.color_template
+			# Process parameters
+			for param_name in resource.modifier_parameters:
+				var uniform_name = "shape%s_mod_%s" % [id, param_name]
+				processed_color = processed_color.replace("{%s}" % param_name, uniform_name)
+			code += "        " + processed_color + "\n"
 	code += """
 		
 		
 		// Calculate lighting
 		vec3 light_dir = normalize(vec3(1.0, 1.0, 1.0));
-		float diffuse = max(0.0, dot(hit_normal, light_dir));
-		float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
+		//float diffuse = max(0.0, dot(hit_normal, light_dir));
+		//float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
 		//ALBEDO *= current_accuracy*10.0;
-		ALBEDO *= (diffuse * shadow + 0.1);
+		//ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
 		discard;

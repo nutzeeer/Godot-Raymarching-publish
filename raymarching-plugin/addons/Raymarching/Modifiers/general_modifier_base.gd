@@ -123,6 +123,9 @@ func has_p_modifier() -> bool:
 func has_color_modifier() -> bool:
 	return get_color_modifier_template() != ""
 	
+func get_pre_map_functions() -> String:
+	return ""  # Base class returns empty string
+
 
 func has_forloop_modifier() -> bool:
 	return get_forloop_modifier_template() != ""

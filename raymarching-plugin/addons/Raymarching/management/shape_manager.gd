@@ -265,6 +265,7 @@ func get_shader_data() -> Dictionary:
 			"parameters": get_current_shape_parameters_dict()
 		},
 		"modifier": {
+			"pre_map_functions": current_modifier.get_pre_map_functions() if current_modifier else "",
 			"d_template": current_modifier.get_d_modifier_template() if current_modifier else "",
 			"p_template": current_modifier.get_p_modifier_template() if current_modifier else "",
 			"color_template": current_modifier.get_color_modifier_template() if current_modifier else "",

@@ -26,6 +26,12 @@ const MODIFIER_PARAMETERS = [
 func get_modifier_parameters() -> Array:
 	return MODIFIER_PARAMETERS
 
+
+# Utility function placed directly after the uniforms.
+# - Since the function order matters in glsl functions used in the map need to be declared before it.
+func get_pre_map_functions() -> String:
+	return ""  # Base class returns empty string
+
 # Position Modification Template
 # - Modifies the position (p) before SDF calculation
 # - Redefines p as modified p to avoid overwriting the variable used by all shapes.

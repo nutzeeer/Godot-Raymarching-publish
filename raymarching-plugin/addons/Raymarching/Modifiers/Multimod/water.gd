@@ -46,7 +46,7 @@ const MODIFIER_PARAMETERS = [
 func get_modifier_parameters() -> Array:
 	return MODIFIER_PARAMETERS
 
-func get_utility_functions() -> String:
+func get_pre_map_functions() -> String:
 	return """
 // Layered noise for water waves
 float water_noise(vec3 p, float scale) {
@@ -69,21 +69,23 @@ float water_noise(vec3 p, float scale) {
 	
 	return noise;
 }
+"""
 
+func get_utility_functions() -> String:
+	return """
 // Fresnel effect calculation
 float fresnel(vec3 normal, vec3 view, float power) {
 	return pow(1.0 - abs(dot(normal, view)), power);
 }
 
 // Edge foam calculation
-float calculate_foam(vec3 p, float d, float intensity) {
+float calculate_foam(vec3 p, float t, float intensity) {
 	vec3 normal = getNormal(p);
 	float height_foam = smoothstep(0.0, 1.0, abs(water_noise(p * 2.0, 1.0)));
-	float edge_foam = 1.0 - smoothstep(0.0, 0.5, abs(d));
+	float edge_foam = 1.0 - smoothstep(0.0, 0.5, abs(t));
 	return mix(edge_foam, height_foam, 0.5) * intensity;
 }
 """
-
 func get_d_modifier_template() -> String:
 	return """
 	// Apply wave displacement
@@ -94,11 +96,11 @@ func get_d_modifier_template() -> String:
 func get_color_modifier_template() -> String:
 	return """
 	// Calculate water color and effects
-	float foam = calculate_foam(hit_pos, d, {foam_intensity});
-	float fresnel_factor = fresnel(hit_normal, -rd, 5.0);
+	float foam = calculate_foam(hit_pos,t, {foam_intensity});
+	float fresnel_factor = fresnel(hit_normal, -current_rd, 5.0);
 	
 	// Mix water color with foam and fresnel
-	vec3 water_base = {water_color} * (1.0 - d * {depth_fade} * 0.1);
+	vec3 water_base = {water_color} * (1.0 -t * {depth_fade} * 0.1);
 	vec3 foam_color = vec3(1.0);
 	vec3 fresnel_color = vec3(0.8, 0.9, 1.0);
 	

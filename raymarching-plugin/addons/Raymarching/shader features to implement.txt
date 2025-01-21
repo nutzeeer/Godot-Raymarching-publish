@@ -25,3 +25,12 @@ sdf generator nach paper, aus vertex formen.
 physik mit 4D sdf integralen mit physikparametern. dann ableitung für effizienz. darstellungsschritte geteilt durch fps. vllt. mit motion blur mit berechnungen zwischen den bildern.
 
 scary sine wave mit amplitude nahe 1 hat gruselschatten. bei 1 ist der bildschirm voll. horror game mit abstandsparameter. wave frequency auch.
+
+bounding volume hierarchy to detect inactive pixels to save resources. 
+shape on shape interactions.
+working export ability (for demos for example).
+for loop modifier refraction repair for multiple shapes.(takes first shape parameters for all).
+scene change shader rebuilding. (also on play only shows node_3d scene not others.)
+mesh depth integration.
+multiple modifier selection.
+4D sdf shapes for physics.

@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://biwidmcd3kww"]
+[gd_scene load_steps=4 format=3 uid="uid://c2hefbs7b8ptw"]
 
-[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_5clfm"]
-[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="1_t3n3c"]
-[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="2_jj8wy"]
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_foerc"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_e4hue"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_y5ur0"]
 
 [node name="Node3D" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
@@ -10,27 +10,22 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.4225
 [node name="Node3D" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56173, 0, 6.35165)
 top_level = true
-script = ExtResource("1_5clfm")
+script = ExtResource("1_foerc")
 fly_speed = 0.1
 fast_speed = 1.0
 sdf_influence = 9.0
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
-script = ExtResource("1_t3n3c")
+script = ExtResource("2_e4hue")
 max_steps = 1000
 surface_distance = 0.0001
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.223165, 0, 0)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_y5ur0")
 shape_type = 18
 modifier_type = 5
-power = 8.0
-iterations = 4
-bailout = 2.0
-detail_scale = 0.5
-detail_growth = 1.0
 has_D_result_modifier = true
 has_local_p_modifier = false
 has_color_surface_modifier = true
