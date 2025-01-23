@@ -202,6 +202,8 @@ uniform int MAX_STEPS;
 uniform float MAX_DISTANCE;
 uniform float SURFACE_DISTANCE;
 uniform float NORMAL_PRECISION;
+uniform float PHYSICS_TIME;  // Add this
+
 """
 	
 	for id in shape_resources:

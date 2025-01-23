@@ -8,35 +8,31 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
 
 [node name="Node3D" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.56173, 0, 6.35165)
-top_level = true
 script = ExtResource("1_5clfm")
-fly_speed = 0.1
-fast_speed = 1.0
-sdf_influence = 9.0
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
-max_steps = 1000
-surface_distance = 0.0001
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.223165, 0, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 18
-modifier_type = 5
-power = 8.0
-iterations = 4
-bailout = 2.0
-detail_scale = 0.5
-detail_growth = 1.0
-has_D_result_modifier = true
-has_local_p_modifier = false
-has_color_surface_modifier = true
+shape_type = 0
+modifier_type = 8
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = true
+has_color_surface_modifier = false
 has_forloop_modifier = null
-choppiness = 0.075
-foam_intensity = 0.0
-water_color = Vector3(0.1, 0.3, 0.4)
-wave_scale = 0.145
-depth_fade = 2.031
+gravity_strength = 9.81
+fractal_scale = 2.0
+turbulence = 0.5
+deform_strength = 1.0
+
+[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.03904, 0)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 25
+modifier_type = 0
+height = 0.0

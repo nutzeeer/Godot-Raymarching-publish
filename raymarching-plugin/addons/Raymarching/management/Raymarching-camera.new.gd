@@ -162,8 +162,15 @@ func set_for_loop_modifier(modifier_params: Dictionary) -> void:
 
 
 
-func _process(_delta: float) -> void:
+# In Raymarching-camera.new.gd
+var physics_time: float = 0.0
+
+func _physics_process(delta: float) -> void:
 	update_shader_parameters()
+
+	physics_time += delta
+	if _material:
+		_material.set_shader_parameter("PHYSICS_TIME", physics_time)
 	#
 	#print("Camera Transform Details:")
 	#print("  Local Position: ", position)

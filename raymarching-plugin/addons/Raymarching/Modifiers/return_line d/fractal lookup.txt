@@ -1,0 +1,136 @@
+Here are the additional suggested enhancements we could implement:
+
+1. Color Modulation:
+```gdscript
+# Add parameters
+{
+    "name": "color_influence",
+    "type": TYPE_FLOAT,
+    "default": 0.5,
+    "min": 0.0,
+    "max": 1.0
+},
+{
+    "name": "color_shift",
+    "type": TYPE_VECTOR3,  # RGB offset
+    "default": Vector3(0.1, 0.2, 0.3)
+}
+
+# Add color_modifier_template
+func get_color_modifier_template() -> String:
+    return """
+    vec3 fractal_color = vec3(pattern * 0.5 + 0.5) * {color_shift};
+    ALBEDO = mix(ALBEDO, fractal_color, {color_influence});
+    """
+```
+
+2. Alternative Fractal Types:
+```gdscript
+# Add parameter
+{
+    "name": "fractal_type",
+    "type": TYPE_INT,
+    "default": 0,
+    "min": 0,
+    "max": 3,  # Number of implemented types
+    "description": "0=Julia, 1=BurningShip, 2=Phoenix, 3=Mandelbrot"
+}
+
+# Add to pre_map_functions
+float burning_ship_iteration(vec2 z, vec2 c) {
+    z = abs(z);
+    return /* burning ship math */;
+}
+
+float phoenix_iteration(vec2 z, vec2 c, vec2 prev_z) {
+    return /* phoenix fractal math */;
+}
+```
+
+3. Multi-Object Interaction:
+```gdscript
+# Add to pre_map_functions
+float get_neighbor_influence(vec3 pos, float max_distance) {
+    float influence = 0.0;
+    // Loop through other objects with fractal modifiers
+    // Blend their patterns based on distance
+    return influence;
+}
+```
+
+4. Advanced Animation Patterns:
+```gdscript
+# Add parameters
+{
+    "name": "animation_complexity",
+    "type": TYPE_INT,
+    "default": 1,
+    "min": 1,
+    "max": 3
+},
+{
+    "name": "animation_pattern",
+    "type": TYPE_INT,
+    "default": 0,  # 0=Flow, 1=Pulse, 2=Wave, 3=Spiral
+    "min": 0,
+    "max": 3
+}
+```
+
+5. Performance Optimization:
+```gdscript
+# Add parameters
+{
+    "name": "detail_cutoff",
+    "type": TYPE_FLOAT,
+    "default": 0.1,
+    "min": 0.01,
+    "max": 1.0,
+    "description": "Distance at which detail reduces"
+},
+{
+    "name": "max_iterations",
+    "type": TYPE_INT,
+    "default": 4,
+    "min": 1,
+    "max": 8
+}
+```
+
+6. Volumetric Effects:
+```gdscript
+# Add to pre_map_functions
+float get_volumetric_density(vec3 pos) {
+    // Calculate 3D fractal density
+    return density;
+}
+
+# Add forloop_modifier_template
+func get_forloop_modifier_template() -> String:
+    return """
+    float density = get_volumetric_density(pos);
+    if(density > threshold) {
+        // Modify ray behavior
+    }
+    """
+```
+
+7. Surface Detail Enhancement:
+```gdscript
+# Add parameters for:
+- Normal map influence
+- Displacement strength
+- Detail layering
+- Surface roughness
+```
+
+8. Physical Property Simulation:
+```gdscript
+# Add simulation of:
+- Heat distortion
+- Electric fields
+- Magnetic effects
+- Crystal growth patterns
+```
+
+Would you like me to elaborate on any of these features or provide more detailed implementation for any specific one?
