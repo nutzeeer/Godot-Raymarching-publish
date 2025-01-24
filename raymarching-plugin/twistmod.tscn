@@ -30,4 +30,3 @@ has_forloop_modifier = null
 twist_amount = 10.0
 twist_axis = Vector3(0, 1, 1)
 twist_center = Vector3(0, 0, 0)
-falloff_distance = 2.066

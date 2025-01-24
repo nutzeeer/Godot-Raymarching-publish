@@ -14,25 +14,18 @@ script = ExtResource("1_5clfm")
 script = ExtResource("1_t3n3c")
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 8
-size = Vector3(1, 1, 1)
-roundness = 0.0
-has_D_result_modifier = false
-has_local_p_modifier = true
-has_color_surface_modifier = false
+shape_type = 12
+modifier_type = 9
+size = Vector2(1, 1)
+has_D_result_modifier = true
+has_local_p_modifier = false
+has_color_surface_modifier = true
 has_forloop_modifier = null
-gravity_strength = 9.81
-fractal_scale = 2.0
-turbulence = 0.5
-deform_strength = 1.0
-
-[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.03904, 0)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 25
-modifier_type = 0
-height = 0.0
+choppiness = 2.0
+foam_intensity = 1.0
+water_color = Vector3(0.1, 0.3, 0.4)
+wave_scale = 10.0
+depth_fade = 0.1
