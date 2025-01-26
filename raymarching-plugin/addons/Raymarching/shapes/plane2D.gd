@@ -3,7 +3,7 @@ class_name Plane2D
 extends ShapeBase
 
 const SHAPE_PARAMETERS = [
-	{"name": "size", "type": TYPE_VECTOR2, "default": Vector2(1.0, 1.0), "min": 0.0001}
+	{"name": "size", "type": TYPE_VECTOR2, "default": Vector2(10.0, 10.0), "min": 0.0001}
 ]
 
 func get_shape_parameters() -> Array:

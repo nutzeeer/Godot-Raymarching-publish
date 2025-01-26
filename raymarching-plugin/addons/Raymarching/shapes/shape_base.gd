@@ -2,12 +2,13 @@ class_name ShapeBase
 extends Resource
 
 const BASE_PARAMETERS = [
-#{Parameters applied to all shapes go here}
+	# {Parameters applied to all shapes go here}
 ]
 
 var property_values: Dictionary = {}
 @export var material: Material
 var node_3d: Node3D
+var sequential_id: int = -1  # Add this line
 
 func _init():
 	_setup_parameters()
@@ -25,7 +26,7 @@ func get_transform_matrix() -> Transform3D:
 	return node_3d.transform if node_3d else Transform3D.IDENTITY
 
 func get_shape_id() -> String:
-	return str(node_3d.get_instance_id()) if node_3d else "0"
+	return str(sequential_id) if sequential_id != -1 else "0"  # Use sequential_id instead of instance_id
 
 func get_parameter_name(param_name: String) -> String:
 	return "shape%s_%s" % [get_shape_id(), param_name]

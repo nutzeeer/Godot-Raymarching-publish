@@ -1,6 +1,8 @@
 class_name ShaderGenerator
 extends Resource
 
+var next_shape_id: int = 0  # Sequential ID counter
+
 class RaymarchParameters:
 	extends RefCounted
 	
@@ -60,12 +62,15 @@ class ShapeResource:
 	var transform: Transform3D
 	var modifier_parameters: Dictionary  # Add this
 	var modifier_templates: Dictionary  # Store all modifier templates
+	var sequential_id: int  # Declare sequential_id here
+
 	
 	signal resource_updated  # Add this line at the top of the class
 
 	
-	func _init(p_manager: ShapeManager) -> void:
+	func _init(p_manager: ShapeManager, p_sequential_id: int) -> void:
 		manager = p_manager
+		sequential_id = p_sequential_id  # Add this line
 		parameters = {}
 		update()
 	
@@ -80,6 +85,7 @@ class ShapeResource:
 			if shape:
 				print("Current shape:", shape)
 				print("Shape class:", shape.get_class())
+				shape.sequential_id = sequential_id  # Pass sequential_id to the shape
 				parameters = shape.get_all_parameters()
 				print("Parameters:", parameters)
 				sdf_code = shape.get_sdf_function()
@@ -137,9 +143,9 @@ func _init() -> void:
 	raymarch_params = RaymarchParameters.new()
 
 func add_shape_manager(manager: ShapeManager) -> int:
-	var resource = ShapeResource.new(manager)
-	var id = manager.get_instance_id()
-	shape_resources[id] = resource
+	var resource = ShapeResource.new(manager, next_shape_id)  # Modify this line
+	shape_resources[next_shape_id] = resource  # Use next_shape_id as the key
+	next_shape_id += 1  # Increment the counter
 	# Debug print to verify connection
 	print("Connecting shape_changed signal from manager to resource.update")
 	# Add connection for shape changes
@@ -150,7 +156,8 @@ func add_shape_manager(manager: ShapeManager) -> int:
 		manager.modifier_changed.connect(resource.update)
 		print("modifier changed signal connected successfully")
 
-	return id
+	return resource.sequential_id  # Return the sequential ID
+
 	
 	
 
@@ -227,33 +234,81 @@ uniform float PHYSICS_TIME;  // Add this
 	return code
 
 
-# Modify generate_shape_uniforms to use ShapeParameter
 func generate_shape_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
-	var code = "\n// Shape ${id} uniforms\n"
-	code += generate_uniform_declaration(id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
+	var code = "\n// Shape %d uniforms\n" % resource.sequential_id  # Use sequential_id
+	code += generate_uniform_declaration(resource.sequential_id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
 	
 	# Add parameters
 	var parameters = resource.parameters.duplicate()
 	for param_name in parameters:
 		var param_value = parameters[param_name]
 		var param = ShapeParameter.new(param_name, typeof(param_value), param_value)
-		code += generate_uniform_declaration(id, param_name, param)
+		code += generate_uniform_declaration(resource.sequential_id, param_name, param)
 	
 	return code
-	
-# Add new function for modifier uniforms
+
 func generate_modifier_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
-	var code = "\n// Shape ${id} modifier uniforms\n"
+	var code = "\n// Shape %d modifier uniforms\n" % resource.sequential_id  # Use sequential_id
 	
 	for param_name in resource.modifier_parameters:
 		var param_value = resource.modifier_parameters[param_name]
 		var param = ShapeParameter.new(param_name, typeof(param_value), param_value)
-		code += generate_uniform_declaration(id, "mod_" + param_name, param)
+		code += generate_uniform_declaration(resource.sequential_id, "mod_" + param_name, param)
 	
 	return code
 
+func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String:
+	var template = effect_map_template
+	if template.is_empty():
+		template = """
+float ${MAP_NAME}(vec3 p) {
+	float final_distance = MAX_DISTANCE;
+	${SHAPES_CODE}
+	return final_distance;
+}"""
+
+	var shape_calculations = ""
+	for shape in shape_resources:
+		if shape.manager.get_current_shape():
+			shape_calculations += "    {\n"
+			
+			# Apply space (p) modifications first if any
+			if shape.modifier_templates.p_template:
+				shape_calculations += "        // Space modification\n"
+				var processed_p_template = shape.modifier_templates.p_template
+				for param_name in shape.modifier_parameters:
+					var uniform_name = "shape%d_mod_%s" % [shape.sequential_id, param_name]  # Use sequential_id
+					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
+				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
+				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+			else:
+				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+			
+			# Calculate base SDF
+			shape_calculations += "        float d = " + shape.manager.get_current_shape().get_sdf_call() + ";\n"
+			
+			# Apply SDF (d) modifications if any
+			if shape.modifier_templates.d_template:
+				shape_calculations += "        // SDF modification\n"
+				var processed_d_template = shape.modifier_templates.d_template
+				for param_name in shape.modifier_parameters:
+					var uniform_name = "shape%d_mod_%s" % [shape.sequential_id, param_name]  # Use sequential_id
+					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
+				shape_calculations += "        " + processed_d_template + "\n"
+			# After SDF and modifier calculations
+			if effect_map_name == "map_id":
+				#Special case for shape identification
+				shape_calculations += "        if (d < current_accuracy) { current_id = %d; }\n" % shape.sequential_id  # Use sequential_id
+			else:
+				# Store result for standard map evaluation
+				shape_calculations += "        final_distance = min(final_distance, d);\n"
+
+			shape_calculations += "    }\n"
+	
+	return template.replace("${MAP_NAME}", effect_map_name).replace("${SHAPES_CODE}", shape_calculations)
+	
 func generate_uniform_declaration(id: int, name: String, param: ShapeParameter) -> String:
 	return param.get_uniform_declaration() + "shape" + str(id) + "_" + name + ";\n"
 
@@ -391,56 +446,6 @@ func generate_all_maps() -> String:
 	
 	return shader_code
 
-func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String:
-	var template = effect_map_template
-	if template.is_empty():
-		template = """
-float ${MAP_NAME}(vec3 p) {
-	float final_distance = MAX_DISTANCE;
-	${SHAPES_CODE}
-	return final_distance;
-}"""
-
-	var shape_calculations = ""
-	for shape in shape_resources:
-		if shape.manager.get_current_shape():
-			shape_calculations += "    {\n"
-			
-			# Apply space (p) modifications first if any
-			if shape.modifier_templates.p_template:
-				shape_calculations += "        // Space modification\n"
-				var processed_p_template = shape.modifier_templates.p_template
-				for param_name in shape.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
-					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
-				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
-				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.manager.get_instance_id()
-			else:
-				shape_calculations += "        vec3 local_p = (inverse(shape%s_transform) * vec4(p, 1.0)).xyz;\n" % shape.manager.get_instance_id()
-			
-			# Calculate base SDF
-			shape_calculations += "        float d = " + shape.manager.get_current_shape().get_sdf_call() + ";\n"
-			
-			# Apply SDF (d) modifications if any
-			if shape.modifier_templates.d_template:
-				shape_calculations += "        // SDF modification\n"
-				var processed_d_template = shape.modifier_templates.d_template
-				for param_name in shape.modifier_parameters:
-					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
-					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
-				shape_calculations += "        " + processed_d_template + "\n"
-			# After SDF and modifier calculations
-			if effect_map_name == "map_id":
-				#Special case for shape identification
-				shape_calculations += "        if (d < current_accuracy) { current_id = %d; }\n" % shape.manager.get_instance_id()
-			else:
-				# Store result for standard map evaluation
-				shape_calculations += "        final_distance = min(final_distance, d);\n"
-
-			shape_calculations += "    }\n"
-	
-	return template.replace("${MAP_NAME}", effect_map_name).replace("${SHAPES_CODE}", shape_calculations)
-
 func get_shape_function_name(resource: ShapeResource) -> String:
 	var shape = resource.manager.get_current_shape()
 	return "sd" + shape.get_class() if shape else "sdSphere"
@@ -484,11 +489,12 @@ void fragment() {
 	bool hit = false;
 	vec3 hit_normal;
 	vec3 hit_pos;
+	int i = 0;
 
 	for (int i = 0; i < MAX_STEPS; i++) {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
-		
+
 		
 		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
 			//discard;
@@ -593,7 +599,7 @@ debug.shape_id = 0;
 			if (shape_id == %s) {
 				
 				%s
-				ALBEDO = vec3(1.0);
+				
 			} 
 	""" % [id, id, processed_color]
 	code += """
@@ -626,7 +632,7 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 	# Update shape-specific parameters
 	for id in shape_resources:
 		var resource = shape_resources[id]
-		var prefix = "shape%s_" % id
+		var prefix = "shape%s_" % resource.sequential_id
 		
 		# Update transform
 		material.set_shader_parameter(

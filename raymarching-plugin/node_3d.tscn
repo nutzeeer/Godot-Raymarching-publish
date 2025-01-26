@@ -1,49 +1,53 @@
-[gd_scene load_steps=5 format=3 uid="uid://biwidmcd3kww"]
+[gd_scene load_steps=4 format=3 uid="uid://biwidmcd3kww"]
 
 [ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_5clfm"]
 [ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="1_t3n3c"]
 [ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="2_jj8wy"]
-[ext_resource type="Script" path="res://control.gd" id="4_foepk"]
 
 [node name="Node3D" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
 
-[node name="Control" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("4_foepk")
-
-[node name="Node3D" type="Node3D" parent="Control"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.422543)
+[node name="Node3D" type="Node3D" parent="."]
 script = ExtResource("1_5clfm")
 
-[node name="RaymarchCamera" type="Camera3D" parent="Control/Node3D"]
+[node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
+max_steps = 1000
+surface_distance = 0.0194217
+normal_precision = 1e-07
 
-[node name="ShapeManager" type="Node3D" parent="Control/Node3D/RaymarchCamera"]
+[node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(-0.104529, 0, -0.994522, 0, 1, 0, 0.994522, 0, -0.104529, 0, -2.96002, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 10
-size = Vector3(1, 1, 1)
-roundness = 0.0
-has_D_result_modifier = true
+shape_type = 24
+modifier_type = 2
+size = Vector2(10, 10)
+has_D_result_modifier = false
 has_local_p_modifier = false
 has_color_surface_modifier = true
 has_forloop_modifier = null
-choppiness = 0.5
-foam_intensity = 0.4
-water_color = Vector3(0.1, 0.3, 0.4)
-wave_scale = 3.0
-depth_fade = 2.0
+metallic_color = Vector3(0, 0, 0)
+roughness = 0.001
+reflection_strength = 0.8
+fresnel_power = 5.0
+max_reflection_steps = 100
+reflection_distance = 1000.0
 
-[node name="ShapeManager2" type="Node3D" parent="Control/Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.00128)
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 0
-modifier_type = 0
+modifier_type = 2
 size = Vector3(1, 1, 1)
 roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = true
+has_forloop_modifier = null
+metallic_color = Vector3(0, 0, 0)
+roughness = 0.001
+reflection_strength = 0.8
+fresnel_power = 5.0
+max_reflection_steps = 32
+reflection_distance = 50.0
