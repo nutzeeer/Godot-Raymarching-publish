@@ -1,5 +1,5 @@
 # plane_2d.gd
-class_name Plane2D
+class_name Plane2D1
 extends ShapeBase
 
 const SHAPE_PARAMETERS = [
@@ -22,7 +22,7 @@ func get_sdf_function() -> String:
 float sdf_shape%s_plane2d(vec3 p, vec2 size) {
 	// Core calculation
 	vec2 d = abs(p.xz) - size;  // Distance in XZ plane from rectangle bounds
-	float plane_dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);  // XZ distance
+	float plane_dist = length(max(d, 0.000001)) + min(max(d.x, d.y), 0.0);  // XZ distance
 	float height_dist = abs(p.y);  // Distance from XY plane
 	float result = max(plane_dist, height_dist);  // Combine using max for sharp boundary
 	return result;
