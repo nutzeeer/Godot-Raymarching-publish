@@ -255,15 +255,22 @@ vec3 apply_modifiers(vec3 p, RayModifiers mods) {
 
 func generate_pre_map_functions() -> String:
 	var code = ""
+	var pre_map_functions = {}  # Dictionary to store unique pre_map_functions
+	
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.modifier_templates.get("pre_map_functions"):
-			var processed_template = resource.modifier_templates.pre_map_functions
 			# Process parameters
+			var processed_template = resource.modifier_templates.pre_map_functions
 			for param_name in resource.modifier_parameters:
 				var uniform_name = "shape%s_mod_%s" % [id, param_name]
 				processed_template = processed_template.replace("{%s}" % param_name, uniform_name)
-			code += processed_template + "\n"
+			pre_map_functions[processed_template] = true
+	
+	# Add each unique pre_map_function once
+	for pre_func in pre_map_functions:
+		code += pre_func + "\n"
+	
 	return code
 
 func generate_utility_functions() -> String:
@@ -355,6 +362,18 @@ func generate_all_maps() -> String:
 	# Generate the standard map with all shapes
 	shader_code += generate_map_function("map", shape_resources.values())
 	
+	# ID map template that returns shape ID when SDF indicates a surface hit
+	var id_template = """
+	int ${MAP_NAME}(vec3 p, float current_accuracy) {
+		float final_distance = MAX_DISTANCE;
+		int current_id = 0;
+		${SHAPES_CODE}
+		return current_id;
+	}"""
+
+	shader_code += generate_map_function("map_id", shape_resources.values(), id_template)
+		
+	
 	return shader_code
 
 func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String:
@@ -395,12 +414,18 @@ float ${MAP_NAME}(vec3 p) {
 					var uniform_name = "shape%s_mod_%s" % [shape.manager.get_instance_id(), param_name]
 					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations += "        " + processed_d_template + "\n"
-			
-			# Store result
-			shape_calculations += "        final_distance = min(final_distance, d);\n"
+			# After SDF and modifier calculations
+			if effect_map_name == "map_id":
+				#Special case for shape identification
+				shape_calculations += "        if (d < current_accuracy) { current_id = %d; }\n" % shape.manager.get_instance_id()
+			else:
+				# Store result for standard map evaluation
+				shape_calculations += "        final_distance = min(final_distance, d);\n"
+
 			shape_calculations += "    }\n"
 	
 	return template.replace("${MAP_NAME}", effect_map_name).replace("${SHAPES_CODE}", shape_calculations)
+
 func get_shape_function_name(resource: ShapeResource) -> String:
 	var shape = resource.manager.get_current_shape()
 	return "sd" + shape.get_class() if shape else "sdSphere"
@@ -506,24 +531,34 @@ camera_rotation.y = -asin(INV_VIEW_MATRIX[0][2]);
 camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 	//hit = true;
 	if (hit) {
+		int shape_id = map_id(hit_pos, current_accuracy);
+
 		ALPHA = 1.0;
+		//
+
 		ALBEDO = hit_normal * 0.5 + 0.5;
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
-
 """
 	
 	# In generate_main_code()
 	# Apply color/surface modifications
+# In generate_main_code()
+# Apply color/surface modifications
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.modifier_templates.color_template:
-			code += "        // Surface modification for shape " + str(id) + "\n"
+			# Process parameters first
 			var processed_color = resource.modifier_templates.color_template
-			# Process parameters
 			for param_name in resource.modifier_parameters:
 				var uniform_name = "shape%s_mod_%s" % [id, param_name]
 				processed_color = processed_color.replace("{%s}" % param_name, uniform_name)
-			code += "        " + processed_color + "\n"
+			
+			# Then insert the processed template into the if statement
+			code += """        // Surface modification for shape %s
+			if (shape_id == %d) {
+				%s
+			} 
+	""" % [id, id, processed_color]
 	code += """
 		
 		
