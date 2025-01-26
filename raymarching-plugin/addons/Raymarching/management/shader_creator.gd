@@ -172,6 +172,21 @@ func generate_shader() -> String:
 	// - For loop modifiers for ray direction and position
 	// - Return line modifiers for SDF calculations
 	// See for_loop_modifiers.gd and sdf_return_line_modifiers.gd
+	
+	
+struct DebugInfo {
+	float t;
+	float d;
+	float steps;
+	vec3 normal;
+	vec3 pos;
+	int shape_id;
+};
+
+vec4 encode_debug_info(DebugInfo debug) {
+	// Pack multiple values into RGBA
+	return vec4(debug.t, debug.d, float(debug.steps), float(debug.shape_id));
+}
 	"""
 	
 
@@ -530,8 +545,28 @@ camera_rotation.x = atan(INV_VIEW_MATRIX[1][2], INV_VIEW_MATRIX[2][2]);
 camera_rotation.y = -asin(INV_VIEW_MATRIX[0][2]);
 camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 	//hit = true;
+	
+	
+	DebugInfo debug;
+debug.t = 0.0;
+//debug.d = 0.0;
+//debug.steps = float(i);
+debug.normal = vec3(0.0);
+debug.pos = vec3(0.0);
+debug.shape_id = 0;
+	
+	
+	
+	
 	if (hit) {
+		
 		int shape_id = map_id(hit_pos, current_accuracy);
+
+			debug.t = t;
+	//debug.d = d;
+	debug.normal = hit_normal;
+	debug.pos = hit_pos;
+	debug.shape_id = shape_id;
 
 		ALPHA = 1.0;
 		//
@@ -555,8 +590,10 @@ camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
 			
 			# Then insert the processed template into the if statement
 			code += """        // Surface modification for shape %s
-			if (shape_id == %d) {
+			if (shape_id == %s) {
+				
 				%s
+				ALBEDO = vec3(1.0);
 			} 
 	""" % [id, id, processed_color]
 	code += """
