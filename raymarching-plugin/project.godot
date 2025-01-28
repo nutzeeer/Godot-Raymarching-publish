@@ -19,6 +19,15 @@ config/icon="res://icon.svg"
 
 settings/stdout/print_fps=true
 
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+
+[editor]
+
+movie_writer/movie_file="C:/Users/Benutzername/GitLab Repositories/Godot Raymarching/raymarching-plugin/tes.avi"
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/Raymarching/plugin.cfg")

@@ -495,6 +495,8 @@ void fragment() {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
 
+		// Apply for-loop modifications based on shape ID
+		int current_shape_id = map_id(pos, current_accuracy);
 		
 		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
 			//discard;
@@ -502,36 +504,22 @@ void fragment() {
 		//}
 		
 		"""
-	# Create a dictionary to store unique for_loop templates
-	var for_loop_templates: Dictionary = {}
-	
-	# First pass: collect all unique for_loop templates and their parameters
+	# Process for_loop templates by shape
 	for id in shape_resources:
 		var resource = shape_resources[id]
-		if resource.modifier_templates.get("forloop_template"):
-			var template = resource.modifier_templates.forloop_template
-			if !for_loop_templates.has(template):
-				for_loop_templates[template] = []
-			for_loop_templates[template].append({
-				"id": id,
-				"parameters": resource.modifier_parameters
-			})
-	
-	# Second pass: add each unique for_loop template once
-	for template in for_loop_templates:
-		var shapes = for_loop_templates[template]
-		# Use parameters from first shape that uses this template
-		var first_shape = shapes[0]
-		var processed_template = template
-		
-		
-		for param_name in first_shape.parameters:
-			processed_template = processed_template.replace(
-				"{%s}" % param_name,
-				"shape%s_mod_%s" % [first_shape.id, param_name]
-			)
-		code += "        // For loop modification\n"
-		code += "        " + processed_template + "\n"
+		if resource.modifier_templates.forloop_template:
+			# Process parameters first
+			var processed_template = resource.modifier_templates.forloop_template
+			for param_name in resource.modifier_parameters:
+				var uniform_name = "shape%s_mod_%s" % [id, param_name]
+				processed_template = processed_template.replace("{%s}" % param_name, uniform_name)
+			
+			# Add shape-specific for-loop modification
+			code += """
+			if (current_shape_id == %d) {
+				%s
+			}
+			""" % [id, processed_template]
 
 	# Continue with existing code
 	code += """
@@ -622,6 +610,23 @@ debug.shape_id = 0;
 }
 """
 	return code
+	
+	
+func wrap_forloop_template(template: String, map_name: String, shape_id: int) -> String:
+	if template == "" or map_name == "":
+		return ""
+		
+	return """
+	// Check if we're near the surface of this shape
+	float effect_distance = %s(pos);
+	if (effect_distance < current_accuracy) {
+		// Check if this is the correct shape
+		int current_shape_id = map_id(pos, current_accuracy);
+		if (current_shape_id == %d) {
+			%s
+		}
+	}
+	""" % [map_name, shape_id, template]
 
 # Update update_shader_parameters
 func update_shader_parameters(material: ShaderMaterial) -> void:

@@ -1,8 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://biwidmcd3kww"]
+[gd_scene load_steps=7 format=3 uid="uid://8punnsxq37a2"]
 
-[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_5clfm"]
-[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="1_t3n3c"]
-[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="2_jj8wy"]
+[ext_resource type="Script" path="res://cameracontrols.old.gd" id="1_byjws"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/Raymarching-camera.new.gd" id="2_55hkg"]
+[ext_resource type="Script" path="res://addons/Raymarching/management/shape_manager.gd" id="3_174l1"]
 
 [sub_resource type="Animation" id="Animation_riv5g"]
 length = 0.001
@@ -108,17 +108,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.56699, -0.0170631, -0.4225
 
 [node name="Node3D" type="Node3D" parent="."]
 transform = Transform3D(0.98165, 0, 0.190689, 0, 1, 0, -0.190689, 0, 0.98165, 2.29056, 0, 6.17886)
-script = ExtResource("1_5clfm")
+script = ExtResource("1_byjws")
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
-script = ExtResource("1_t3n3c")
-max_steps = 200
-surface_distance = 0.999866
+script = ExtResource("2_55hkg")
+max_steps = 1000
+surface_distance = 1.4902
 
 [node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.37426, -4, -1.13267)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_174l1")
 shape_type = 27
 modifier_type = 0
 size = Vector2(10, 10)
@@ -126,7 +126,7 @@ size = Vector2(10, 10)
 [node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, -10.1095, 0, 0.507311)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_174l1")
 shape_type = 27
 modifier_type = 1
 size = Vector2(10, 10)
@@ -140,7 +140,7 @@ intensity = 0.972
 [node name="ShapeManager5" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.937127, 0, -10.3138)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_174l1")
 shape_type = 27
 modifier_type = 1
 size = Vector2(10, 10)
@@ -154,7 +154,7 @@ intensity = 0.352
 [node name="ShapeManager6" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -5.46548, -1.37611, -3.33082)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_174l1")
 shape_type = 30
 modifier_type = 7
 radius = 2.0
@@ -171,7 +171,7 @@ metallic_color = Vector3(1, 1, 0.1)
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 4.74713, 1.35631, -4.98824)
 top_level = true
-script = ExtResource("2_jj8wy")
+script = ExtResource("3_174l1")
 shape_type = 34
 modifier_type = 7
 radius = 1.0
@@ -188,13 +188,14 @@ max_reflection_steps = 100
 metallic_color = Vector3(0.1, 0.1, 0.5)
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(3, 0, 0.000145435, 0, 3, 0, -0.000145435, 0, 3, 2.75745, 0, 2.05239)
+transform = Transform3D(1, 0, 4.84785e-05, 0, 1, 0, -4.84785e-05, 0, 1, 0, 0, 0)
 top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 0
+script = ExtResource("3_174l1")
+shape_type = 17
 modifier_type = 7
-size = Vector3(1, 1, 1)
-roundness = 0.0
+power = -8.0
+iterations = 3
+bailout = 2.0
 has_D_result_modifier = false
 has_local_p_modifier = false
 has_color_surface_modifier = true
@@ -203,7 +204,7 @@ roughness = 0.0
 fresnel_power = 5.0
 reflection_distance = 100.0
 max_reflection_steps = 100
-metallic_color = Vector3(0, 0, 0)
+metallic_color = Vector3(1, 1, 1)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera"]
 libraries = {
