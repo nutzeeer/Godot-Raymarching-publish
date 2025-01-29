@@ -80,8 +80,7 @@ func get_utility_functions() -> String:
 func get_forloop_modifier_template() -> String:
 	return """
 	// Check for reflection
-	float f2 = map_reflective3(pos);
-	if (f2 < current_accuracy*1.001) {
+
 		hit = true;
 		// Calculate view and reflection vectors
 		vec3 V = normalize(ray_origin - pos);
@@ -115,7 +114,7 @@ func get_forloop_modifier_template() -> String:
 		}
 		
 		continue;
-	}
+	
 	"""
 
 func get_color_modifier_template() -> String:

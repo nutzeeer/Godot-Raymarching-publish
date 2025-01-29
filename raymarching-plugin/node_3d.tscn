@@ -165,7 +165,7 @@ has_forloop_modifier = null
 roughness = 0.0
 fresnel_power = 3.75
 reflection_distance = 599.95
-max_reflection_steps = 86
+max_reflection_steps = 500
 metallic_color = Vector3(1, 1, 0.1)
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
@@ -184,7 +184,7 @@ has_forloop_modifier = null
 roughness = 0.0
 fresnel_power = 5.0
 reflection_distance = 100.0
-max_reflection_steps = 100
+max_reflection_steps = 500
 metallic_color = Vector3(0.1, 0.1, 0.5)
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
@@ -202,7 +202,7 @@ has_forloop_modifier = null
 roughness = 0.0
 fresnel_power = 5.0
 reflection_distance = 100.0
-max_reflection_steps = 100
+max_reflection_steps = 500
 metallic_color = Vector3(0, 0, 0)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Node3D/RaymarchCamera"]
