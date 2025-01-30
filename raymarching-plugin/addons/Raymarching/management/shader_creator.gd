@@ -298,9 +298,9 @@ float ${MAP_NAME}(vec3 p) {
 					processed_d_template = processed_d_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations += "        " + processed_d_template + "\n"
 			# After SDF and modifier calculations
-			if effect_map_name == "map_id":
+			if "_id" in effect_map_name:
 				#Special case for shape identification
-				shape_calculations += "        if (d < current_accuracy) { current_id = %d; }\n" % shape.sequential_id  # Use sequential_id
+				shape_calculations += "        if (d < current_accuracy) { return %d; }\n" % shape.sequential_id  # Use sequential_id
 			else:
 				# Store result for standard map evaluation
 				shape_calculations += "        final_distance = min(final_distance, d);\n"
@@ -357,6 +357,47 @@ vec3 getNormal(vec3 p) {
 		map(p + e.yyx) - map(p - e.yyx)
 	);
 	return normalize(n);
+}
+
+vec3 getNormal3(vec3 p) { //glitchy optimized tetrahedron. also uses p.
+	float eps = NORMAL_PRECISION * length(p);
+	float center = map(p); // From raymarching
+	
+	// Tetrahedral sampling directions (3 of 4 tetrahedron vertices)
+	vec3 v1 = vec3( 1.0, -1.0, -1.0);
+	vec3 v2 = vec3(-1.0, -1.0,  1.0);
+	vec3 v3 = vec3(-1.0,  1.0, -1.0);
+	
+	// Sample offsets (scale by epsilon)
+	vec3 s1 = v1 * eps;
+	vec3 s2 = v2 * eps;
+	vec3 s3 = v3 * eps;
+	
+	// Get SDF differences
+	float d1 = map(p + s1) - center;
+	float d2 = map(p + s2) - center;
+	float d3 = map(p + s3) - center;
+	
+	// Solve linear system to reconstruct gradient
+	vec3 grad;
+	grad.x = (0.0*d1 - 0.5*d2 - 0.5*d3) / eps;
+	grad.y = (-0.5*d1 - 0.5*d2 + 0.0*d3) / eps;
+	grad.z = (-0.5*d1 + 0.0*d2 - 0.5*d3) / eps;
+	
+	return normalize(grad);
+}
+
+vec3 getNorma2(vec3 p) { //optimized central difference using p. minor glitch in shadows.
+	float eps = NORMAL_PRECISION * length(p);
+	float center = map(p); // Precomputed during raymarching
+	
+	vec3 n = vec3(
+		map(p + vec3(eps, 0, 0)) - center, // X-axis
+		map(p + vec3(0, eps, 0)) - center, // Y-axis
+		map(p + vec3(0, 0, eps)) - center  // Z-axis
+	);
+	
+	return normalize(n / eps); // Normalize after scaling
 }
 
 float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
@@ -441,7 +482,19 @@ func generate_all_maps() -> String:
 		return current_id;
 	}"""
 
+
+	# Generate ID map for for-loop effects (only shapes with effects)
+	var effect_shapes: Array = []
+	for shapes in map_groups_by_effect.values():
+		effect_shapes.append_array(shapes)
+		
+		#Shape identification during ray marching for loop
+	shader_code += generate_map_function("effect_id", effect_shapes, id_template)
+	
+		#All shape identification in final coloring application
 	shader_code += generate_map_function("map_id", shape_resources.values(), id_template)
+	
+
 		
 	
 	return shader_code
@@ -495,14 +548,16 @@ void fragment() {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
 
-		// Apply for-loop modifications based on shape ID
-		int current_shape_id = map_id(pos, current_accuracy);
+
 		
 		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
 			//discard;
 		//	break;
 		//}
-		
+				if (d < current_accuracy) {
+					
+				// Apply for-loop modifications based on shape ID
+		int current_shape_id = effect_id(pos, current_accuracy);
 		"""
 	# Process for_loop templates by shape
 	for id in shape_resources:
@@ -524,7 +579,7 @@ void fragment() {
 	# Continue with existing code
 	code += """
 		
-		if (d < current_accuracy) {
+
 			hit = true;
 			hit_pos = pos;
 			hit_normal = getNormal(pos);
