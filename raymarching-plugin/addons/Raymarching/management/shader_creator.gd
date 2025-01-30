@@ -60,6 +60,7 @@ class ShapeResource:
 	var parameters: Dictionary
 	var sdf_code: String
 	var transform: Transform3D
+	var inverse_transform: Transform3D
 	var modifier_parameters: Dictionary  # Add this
 	var modifier_templates: Dictionary  # Store all modifier templates
 	var sequential_id: int  # Declare sequential_id here
@@ -81,6 +82,10 @@ class ShapeResource:
 			var shape = manager.get_current_shape()
 			print("Manager:", manager.name)
 			transform = manager.global_transform
+			#inverse_transform = Transform3D(transform.basis.inverse() #nonfunctiona
+			inverse_transform = transform.affine_inverse() # Precompute inverse
+			#inverse_transform.basis = inverse_transform.basis.orthonormalized() #useless and broken.
+
 			print("Transform:", transform)
 			if shape:
 				print("Current shape:", shape)
@@ -123,6 +128,10 @@ class ShapeResource:
 	func _process(_delta: float) -> void:
 		
 		if manager:
+			transform = manager.global_transform
+
+			inverse_transform = transform.affine_inverse() # Precompute inverse
+
 			var shape = manager.get_current_shape()
 			if shape:
 				# Update parameters from live values
@@ -238,6 +247,8 @@ func generate_shape_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
 	var code = "\n// Shape %d uniforms\n" % resource.sequential_id  # Use sequential_id
 	code += generate_uniform_declaration(resource.sequential_id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
+	code += generate_uniform_declaration(resource.sequential_id, "inverse_transform", ShapeParameter.new("inverse_transform", TYPE_TRANSFORM3D, resource.inverse_transform))
+
 	
 	# Add parameters
 	var parameters = resource.parameters.duplicate()
@@ -283,9 +294,12 @@ float ${MAP_NAME}(vec3 p) {
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
 				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+
+				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 			else:
+				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
-			
+
 			# Calculate base SDF
 			shape_calculations += "        float d = " + shape.manager.get_current_shape().get_sdf_call() + ";\n"
 			
@@ -700,6 +714,10 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 		material.set_shader_parameter(
 			prefix + "transform",
 			resource.manager.global_transform
+		)
+		material.set_shader_parameter(
+			prefix + "inverse_transform",
+			resource.inverse_transform
 		)
 		
 		# Update shape parameters
