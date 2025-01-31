@@ -82,9 +82,8 @@ class ShapeResource:
 			var shape = manager.get_current_shape()
 			print("Manager:", manager.name)
 			transform = manager.global_transform
-			#inverse_transform = Transform3D(transform.basis.inverse() #nonfunctiona
-			inverse_transform = transform.affine_inverse() # Precompute inverse
-			#inverse_transform.basis = inverse_transform.basis.orthonormalized() #useless and broken.
+			inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
+
 
 			print("Transform:", transform)
 			if shape:
@@ -130,7 +129,7 @@ class ShapeResource:
 		if manager:
 			transform = manager.global_transform
 
-			inverse_transform = transform.affine_inverse() # Precompute inverse
+			inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
 
 			var shape = manager.get_current_shape()
 			if shape:
@@ -359,7 +358,7 @@ func generate_pre_map_functions() -> String:
 
 func generate_utility_functions() -> String:
 	var code = """
-vec3 getNormal(vec3 p) {
+vec3 getNormal0(vec3 p) {
 	// Use smaller epsilon based on distance from point
 	float eps = NORMAL_PRECISION * length(p);
 	vec2 e = vec2(eps, 0.0);
@@ -401,8 +400,8 @@ vec3 getNormal3(vec3 p) { //glitchy optimized tetrahedron. also uses p.
 	return normalize(grad);
 }
 
-vec3 getNorma2(vec3 p) { //optimized central difference using p. minor glitch in shadows.
-	float eps = NORMAL_PRECISION * length(p);
+vec3 getNormal(vec3 p) { //optimized central difference using p. minor glitch in shadows.
+	float eps = NORMAL_PRECISION * length(p) * 2.0;
 	float center = map(p); // Precomputed during raymarching
 	
 	vec3 n = vec3(
@@ -557,8 +556,11 @@ void fragment() {
 	vec3 hit_normal;
 	vec3 hit_pos;
 	int i = 0;
+	vec3 prevpos = vec3(0.0); // currently not needed, can be removed.
+	vec3 pos = vec3(0.0);
 
 	for (int i = 0; i < MAX_STEPS; i++) {
+		prevpos = pos; //can be removed. not needed currently.
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
 

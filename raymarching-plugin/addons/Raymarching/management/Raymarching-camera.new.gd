@@ -26,7 +26,7 @@ func _init() -> void:
 	
 
 func _ready() -> void:
-	$AnimationPlayer.play("bulby")
+	#$AnimationPlayer.play("bulby")
 
 	#get_viewport().debug_draw = Viewport.DEBUG_DRAW_DEPTH
 	for child in get_children():

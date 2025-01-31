@@ -31,3 +31,7 @@ movie_writer/movie_file="C:/Users/Benutzername/GitLab Repositories/Godot Raymarc
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/Raymarching/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="mobile"

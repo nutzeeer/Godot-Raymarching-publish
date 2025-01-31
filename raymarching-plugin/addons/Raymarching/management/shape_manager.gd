@@ -11,6 +11,8 @@ signal shapes_loaded
 signal modifier_changed()
 signal modifier_properties_updated()
 
+var inverse_transform: Transform3D
+
 var shape_classes: Dictionary = {}
 var current_shape: ShapeBase = null
 var shape_type: int = 0 : set = _set_shape_type
@@ -356,6 +358,8 @@ func _get_property_list() -> Array:
 			properties.append(_create_parameter_dict(param))
 	
 	return properties
+	
+	
 func _create_parameter_dict(param: Dictionary) -> Dictionary:
 	var property_info = {
 		"name": param.name,
@@ -425,6 +429,15 @@ func get_current_shape_parameters() -> Array:
 	if current_shape:
 		return current_shape.BASE_PARAMETERS + current_shape.get_shape_parameters()
 	return []
+
+func _process(_delta: float) -> void:
+	# Update transform and inverse transform
+	var new_inverse_transform = transform.affine_inverse()
+	
+	# Only emit if transform actually changed
+	if new_inverse_transform != inverse_transform:
+		inverse_transform = new_inverse_transform
+		properties_updated.emit()  # New signal for just parameter updates
 
 
 func get_current_shape_parameters_dict() -> Dictionary:
