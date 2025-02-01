@@ -82,7 +82,7 @@ class ShapeResource:
 			var shape = manager.get_current_shape()
 			print("Manager:", manager.name)
 			transform = manager.global_transform
-			inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
+			#inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
 
 
 			print("Transform:", transform)
@@ -129,7 +129,7 @@ class ShapeResource:
 		if manager:
 			transform = manager.global_transform
 
-			inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
+			#inverse_transform = manager.inverse_transform  # Get from manager instead of calculating
 
 			var shape = manager.get_current_shape()
 			if shape:
@@ -244,20 +244,26 @@ uniform float PHYSICS_TIME;  // Add this
 
 func generate_shape_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
-	var code = "\n// Shape %d uniforms\n" % resource.sequential_id  # Use sequential_id
-	code += generate_uniform_declaration(resource.sequential_id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
-	code += generate_uniform_declaration(resource.sequential_id, "inverse_transform", ShapeParameter.new("inverse_transform", TYPE_TRANSFORM3D, resource.inverse_transform))
-
+	var code = "\n// Shape %d uniforms\n" % resource.sequential_id
+	
+	# Add transform uniforms
+	#code += generate_uniform_declaration(resource.sequential_id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, resource.transform))
+	#code += generate_uniform_declaration(resource.sequential_id, "inverse_transform", ShapeParameter.new("inverse_transform", TYPE_TRANSFORM3D, resource.manager.inverse_transform))
+	
+	code += generate_uniform_declaration(resource.sequential_id, "transform", ShapeParameter.new("transform", TYPE_TRANSFORM3D, Transform3D.IDENTITY))
+	code += generate_uniform_declaration(resource.sequential_id, "inverse_transform", ShapeParameter.new("inverse_transform", TYPE_TRANSFORM3D, Transform3D.IDENTITY))
 	
 	# Add parameters
 	var parameters = resource.parameters.duplicate()
 	for param_name in parameters:
+		# Skip inverse_transform since we already handled it
+
 		var param_value = parameters[param_name]
 		var param = ShapeParameter.new(param_name, typeof(param_value), param_value)
 		code += generate_uniform_declaration(resource.sequential_id, param_name, param)
-	
 	return code
-
+	
+	
 func generate_modifier_uniforms(id: int) -> String:
 	var resource = shape_resources[id]
 	var code = "\n// Shape %d modifier uniforms\n" % resource.sequential_id  # Use sequential_id
@@ -519,7 +525,7 @@ func get_shape_function_name(resource: ShapeResource) -> String:
 func get_shape_parameters_string(resource: ShapeResource) -> String:
 	var params = []
 	for param_name in resource.parameters:
-		if param_name not in ["position", "rotation", "scale"]:
+		if param_name not in ["position", "rotation", "scale", "inverse_transform"]:
 			params.append(param_name)
 	return ", " + ", ".join(params) if params else ""
 
@@ -719,7 +725,7 @@ func update_shader_parameters(material: ShaderMaterial) -> void:
 		)
 		material.set_shader_parameter(
 			prefix + "inverse_transform",
-			resource.inverse_transform
+			resource.manager.inverse_transform
 		)
 		
 		# Update shape parameters

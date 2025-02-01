@@ -433,7 +433,6 @@ func get_current_shape_parameters() -> Array:
 func _process(_delta: float) -> void:
 	# Update transform and inverse transform
 	var new_inverse_transform = transform.affine_inverse()
-	
 	# Only emit if transform actually changed
 	if new_inverse_transform != inverse_transform:
 		inverse_transform = new_inverse_transform
@@ -449,6 +448,9 @@ func get_current_shape_parameters_dict() -> Dictionary:
 		params["position"] = position
 		params["rotation"] = rotation
 		params["scale"] = scale
+		#Adding inverse transforms to be precalculated
+		params["inverse_transform"] = inverse_transform
+
 	return params
 
 
