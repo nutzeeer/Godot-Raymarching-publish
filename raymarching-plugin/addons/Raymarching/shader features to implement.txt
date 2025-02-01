@@ -26,10 +26,13 @@ physik mit 4D sdf integralen mit physikparametern. dann ableitung für effizienz
 
 scary sine wave mit amplitude nahe 1 hat gruselschatten. bei 1 ist der bildschirm voll. horror game mit abstandsparameter. wave frequency auch.
 
-bounding volume hierarchy to detect inactive pixels to save resources. 
-shape on shape interactions.
-working export ability (for demos for example).
+done:
 for loop modifier refraction repair for multiple shapes.(takes first shape parameters for all).
+
+todo:
+bounding volume hierarchy to detect inactive pixels to save resources. 
+shape on shape interactions. (doable through defining in singular SDF. but thats as one object then.)
+working export ability (for demos for example). -> setting parameters on export.
 scene change shader rebuilding. (also on play only shows node_3d scene not others.)
 mesh depth integration.
 multiple modifier selection.

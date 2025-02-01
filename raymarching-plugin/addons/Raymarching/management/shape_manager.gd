@@ -39,15 +39,15 @@ func _ready() -> void:
 	if shape_classes.is_empty():
 		_load_shape_classes()
 		
-	if Engine.is_editor_hint():
-		shape_changed.connect(_set_shape_type)
-		properties_updated.connect(_on_properties_updated)
+	#if Engine.is_editor_hint():
+	shape_changed.connect(_set_shape_type)
+	properties_updated.connect(_on_properties_updated)
 
 func _enter_tree() -> void:
 	print("ShapeManager _enter_tree called")
-	if Engine.is_editor_hint():
-		print("Trying to load shapes in _enter_tree")
-		_load_shape_classes()
+	#if Engine.is_editor_hint():
+	print("Trying to load shapes in _enter_tree")
+	_load_shape_classes()
 		
 # In shape_manager.gd
 

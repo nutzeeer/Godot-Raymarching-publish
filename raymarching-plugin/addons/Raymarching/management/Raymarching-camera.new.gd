@@ -35,6 +35,12 @@ func _ready() -> void:
 				child.shapes_loaded.connect(update_shape_nodes)
 	update_shape_nodes()
 	#$AnimationPlayer.play("new_animation_2")
+	await get_tree().process_frame
+	
+	for child in get_children():
+		if child is ShapeManager:
+			child.shape_changed.emit()
+	
 	if Engine.is_editor_hint():
 		pass
 
