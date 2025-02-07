@@ -37,7 +37,6 @@ float sdf_shape%s_mandelbulb(vec3 p, float power, int iterations, float bailout,
 	for (int i = 0; i < iterations; i++) {
 		r = length(z);
 		if (r > bailout) break;
-		
 		// Early termination when derivative gets too large
 		if (dr > dr_threshold) break;
 		

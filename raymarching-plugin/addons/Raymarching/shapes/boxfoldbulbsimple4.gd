@@ -1,5 +1,5 @@
 # box_fold_bulb.gd
-class_name BoxFoldBulb3
+class_name BoxFoldBulb4
 extends ShapeBase
 
 const SHAPE_PARAMETERS = [
@@ -70,19 +70,19 @@ float sdf_shape%s_box_fold_bulb(vec3 p, float power, int iterations, float bailo
 	float dr_threshold = 1e5 / detail_growth;
 	float growth_threshold = 1e3;
 	float exponential_factor = 1e2;
+	float power_10 = pow(10.0, power); // Precompute outside the loop
 	
 	for(int i = 0; i < iterations; i++) {
 		r = length(z);
 		
-
-		
+		// Reordered checks: cheaper ones first
 		if (r > bailout) break;
 		if (dr > dr_threshold) break;
+		if (dr > power_10) break; // Use precomputed value
+		if (dr > r * exponential_factor) break;
 		
 		float dr_growth = dr / prev_dr;
-		if (dr_growth > growth_threshold) break;  
-		if (dr > r * exponential_factor) break;
-		if (dr > pow(10.0, power)) break;  
+		if (dr_growth > growth_threshold) break;
 		
 		prev_dr = dr;
 		
@@ -97,13 +97,16 @@ float sdf_shape%s_box_fold_bulb(vec3 p, float power, int iterations, float bailo
 		z *= scale_a1;
 		dr *= abs(scale_a1);
 		
+		// Check r after scaling
 		r = length(z);
 		if (r < 1e-21) r = 1e-21;
+		if (r > bailout) break; // Early exit after scaling
 		
 		float theta = asin(z.z/r) + beta_angle;
 		float phi = atan(z.y, z.x) + alpha_angle;
 		
 		dr = pow(r, power - 1.0) * power * dr + detail_growth;
+		if (dr > dr_threshold) break; // Check dr immediately after update
 		
 		float zr = pow(r, power);
 		theta = theta * power * theta_scale;

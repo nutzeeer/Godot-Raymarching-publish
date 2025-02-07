@@ -2,7 +2,7 @@ extends Node3D
 
 @export var mouse_sensitivity: float = 0.001
 @export var fly_speed: float = 5.0
-@export var fast_speed: float = 100.0
+@export var fast_speed: float = 1.0
 @export var fly_smooth: float = 0.3
 @export var sdf_influence: float = 1.0
 

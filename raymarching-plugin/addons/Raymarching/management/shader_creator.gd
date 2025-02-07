@@ -644,7 +644,7 @@ debug.shape_id = 0;
 		ALPHA = 1.0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		//ALBEDO = hit_normal * 0.5 + 0.5;
+		ALBEDO = hit_normal * 0.5 + 0.5;
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
 """
 	
