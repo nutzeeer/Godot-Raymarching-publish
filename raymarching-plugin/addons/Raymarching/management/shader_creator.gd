@@ -298,12 +298,12 @@ float ${MAP_NAME}(vec3 p) {
 					var uniform_name = "shape%d_mod_%s" % [shape.sequential_id, param_name]  # Use sequential_id
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
-				#shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 
-				shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 			else:
-				shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
-				#shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
+				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 
 			# Calculate base SDF
 			shape_calculations += "        float d = " + shape.manager.get_current_shape().get_sdf_call() + ";\n"
@@ -364,7 +364,7 @@ func generate_pre_map_functions() -> String:
 
 func generate_utility_functions() -> String:
 	var code = """
-vec3 getNormal0(vec3 p) {
+vec3 getNormal(vec3 p) {
 	// Use smaller epsilon based on distance from point
 	float eps = NORMAL_PRECISION * length(p);
 	vec2 e = vec2(eps, 0.0);
@@ -406,7 +406,7 @@ vec3 getNormal3(vec3 p) { //glitchy optimized tetrahedron. also uses p.
 	return normalize(grad);
 }
 
-vec3 getNormal(vec3 p) { //optimized central difference using p. minor glitch in shadows.
+vec3 getNormal4(vec3 p) { //optimized central difference using p. minor glitch in shadows.
 	float eps = NORMAL_PRECISION * length(p) * 2.0;
 	float center = map(p); // Precomputed during raymarching
 	
@@ -567,9 +567,17 @@ void fragment() {
 
 	for (int i = 0; i < MAX_STEPS; i++) {
 		prevpos = pos; //can be removed. not needed currently.
+
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
-
+ 
+if (ray_origin == pos){ // reset t when ro and rd changes.
+	t= 0.0;
+}
+ 
+if(d <0.0){
+	d = -d;
+}
 
 		
 		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
@@ -607,7 +615,7 @@ void fragment() {
 			hit_normal = getNormal(pos);
 			break;
 		}
-		
+
 		t += d;
 		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update at end like original
 		if (t > MAX_DISTANCE) break;
@@ -644,7 +652,7 @@ debug.shape_id = 0;
 		ALPHA = 1.0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		ALBEDO = hit_normal * 0.5 + 0.5;
+		ALBEDO *= hit_normal * 0.5 + 0.5;
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
 """
 	

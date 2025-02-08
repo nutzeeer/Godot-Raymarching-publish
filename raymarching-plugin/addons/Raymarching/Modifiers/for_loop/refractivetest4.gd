@@ -1,4 +1,4 @@
-class_name ChromaticRefractionModifier21
+class_name ChromaticRefractionModifier4
 extends GeneralModifierBase
 
 const MODIFIER_PARAMETERS = [
@@ -90,7 +90,7 @@ func get_forloop_modifier_template() -> String:
 					current_rd = refract(rd_in, n_exit, {ior});
 					if(dot(current_rd, current_rd) == 0.0) current_rd = reflect(rd_in, n_exit);
 					
-					t += d_internal + current_accuracy * 4.0 ;
+					t += d_internal + current_accuracy * 4.0 - d_temp;
 					break;
 				}
 				d_internal += current_accuracy;
