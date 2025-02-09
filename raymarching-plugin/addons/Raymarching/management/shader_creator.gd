@@ -299,7 +299,7 @@ float ${MAP_NAME}(vec3 p) {
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
 				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
-
+				#CPU uniform transforms
 				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 			else:
 				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id

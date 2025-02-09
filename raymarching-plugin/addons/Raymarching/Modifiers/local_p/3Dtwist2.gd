@@ -28,17 +28,17 @@ const MODIFIER_PARAMETERS = [
 	}
 ]
 
-func get_custom_map_name() -> String:
-	return "map_view_compensated"
-
-func get_custom_map_template() -> String:
-	return """
-	float map_view_compensated(vec3 p, vec3 ray_dir) {
-		float d = MAX_DISTANCE;
-		${SHAPES_CODE}
-		return d;
-	}
-	"""
+#func get_custom_map_name() -> String:
+	#return "map_view_compensated"
+#
+#func get_custom_map_template() -> String:
+	#return """
+	#float map_view_compensated(vec3 p, vec3 ray_dir) {
+		#float d = MAX_DISTANCE;
+		#${SHAPES_CODE}
+		#return d;
+	#}
+	#"""
 
 func get_p_modifier_template() -> String:
 	return """
@@ -61,5 +61,5 @@ func get_p_modifier_template() -> String:
 	float s = sin(angle);
 	vec3 rotated = orthogonal * c + cross(axis, orthogonal) * s;
 	
-	return rotated + projected + {twist_center};
+	vec3 result = rotated + projected + {twist_center};
 	"""
