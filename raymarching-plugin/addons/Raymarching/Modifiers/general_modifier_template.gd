@@ -82,6 +82,7 @@ func get_custom_map_name() -> String:
 # Usage in conjunction with for loop effects. To select with shapes effect is applied to.
 # - For loop effects need a custom map name and template.
 # - Any custom map needs a for loop modifier using this map.
+# - Is create per effect, not per shape. Shape effects still need to be a d or p modifier.
 func get_custom_map_template() -> String:
 	return """
 	float map_custom(vec3 p) {

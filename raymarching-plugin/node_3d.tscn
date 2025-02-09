@@ -14,19 +14,6 @@ script = ExtResource("1_5clfm")
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
 
-[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 0
-modifier_type = 16
-size = Vector3(1, 1, 1)
-roundness = 0.0
-has_D_result_modifier = false
-has_local_p_modifier = false
-has_color_surface_modifier = false
-has_forloop_modifier = null
-refraction_index = 1.5
-
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.4309, 0)
 top_level = true
@@ -34,3 +21,33 @@ script = ExtResource("2_jj8wy")
 shape_type = 34
 modifier_type = 0
 size = Vector2(10, 10)
+
+[node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.98368, 0, 0)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 0
+size = Vector3(1, 1, 1)
+roundness = 0.0
+
+[node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.73284)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 0
+size = Vector3(1, 1, 1)
+roundness = 0.0
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 18
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = true
+has_color_surface_modifier = false
+has_forloop_modifier = null

@@ -571,13 +571,11 @@ void fragment() {
 		vec3 pos = ray_origin + current_rd * t;
 		float d = map(pos);
  
-if (ray_origin == pos){ // reset t when ro and rd changes.
+if (ray_origin == pos){ // reset t when ro changes.
 	t= 0.0;
 }
  
-if(d <0.0){
-	d = -d;
-}
+
 
 		
 		//if (length(pos) < scene_depth) { //Z buffer integration with mesh scenery
@@ -648,11 +646,12 @@ debug.shape_id = 0;
 	debug.normal = hit_normal;
 	debug.pos = hit_pos;
 	debug.shape_id = shape_id;
-
 		ALPHA = 1.0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
 		ALBEDO *= hit_normal * 0.5 + 0.5;
+		ALBEDO *= float(MAX_STEPS/i)*0.5+0.5;
+
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
 """
 	
