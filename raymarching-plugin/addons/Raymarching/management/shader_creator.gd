@@ -555,6 +555,7 @@ void fragment() {
 	ray_dir = apply_modifiers(ray_dir, RayModifiers);
 	*/
 	
+	//Raymarching values initialized outside to use them outside the loop
 	float t = 0.0;
 	float current_accuracy = 0.0;  // Start at 0 like original
 	float pixel_scale = 1.0 / min(VIEWPORT_SIZE.x, VIEWPORT_SIZE.y);
@@ -562,19 +563,27 @@ void fragment() {
 	vec3 hit_normal;
 	vec3 hit_pos;
 	int i = 0;
-	vec3 prevpos = vec3(0.0); // currently not needed, can be removed.
 	vec3 pos = vec3(0.0);
+	float d = 0.0;
+	
+	//Previous raymarching step values for surface refinement, initialized.
+	vec3 in_pos = ray_origin; 
+	float in_d = MAX_DISTANCE; 
+	float in_t = 0.0;
+	
+
 
 	for (int i = 0; i < MAX_STEPS; i++) {
-		prevpos = pos; //can be removed. not needed currently.
-
+		//prev_pos = pos; //currently unused and undeclared
+		//prev_d = d;
+		//prev_t = t;
+		
 		vec3 pos = ray_origin + current_rd * t;
-		float d = map(pos);
+		d = map(pos);
  
 if (ray_origin == pos){ // reset t when ro changes.
 	t= 0.0;
 }
- 
 
 
 		
@@ -583,6 +592,21 @@ if (ray_origin == pos){ // reset t when ro changes.
 		//	break;
 		//}
 				if (d < current_accuracy) {
+					
+					//Surface point refinement. test. not finalized or useful i guess.
+					in_t = t+ d + current_accuracy; //overstepping
+					vec3 in_pos = ray_origin + current_rd * in_t; //getting inside position
+					in_d = map(in_pos); // inside d value
+					t -= in_d; // adding overstep to be exact hopefully
+					
+					//enabling this creates artifacts
+					//pos = ray_origin + current_rd * t;
+					//d = map(pos);
+					
+					//temp surface interpolation
+					//float t = prev_t + (prev_d / (prev_d - d)) * (t - prev_t); //updating t to be exact
+					//vec3 pos = ray_origin + current_rd * t_exact; //updating pos to be exact
+
 					
 				// Apply for-loop modifications based on shape ID
 		int current_shape_id = effect_id(pos, current_accuracy);

@@ -105,7 +105,7 @@ func get_color_modifier_template() -> String:
 	vec3 fresnel_color = vec3(0.8, 0.9, 1.0);
 	
 	// Combine all effects
-	ALBEDO = mix(water_base, foam_color, foam);
+	ALBEDO += mix(water_base, foam_color, foam);
 	ALBEDO = mix(ALBEDO, fresnel_color, fresnel_factor * 0.6);
 	
 	// Add subtle caustics effect
