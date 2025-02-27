@@ -562,7 +562,7 @@ void fragment() {
 	bool hit = false;
 	vec3 hit_normal;
 	vec3 hit_pos;
-	int i = 0;
+	
 	vec3 pos = vec3(0.0);
 	float d = 0.0;
 	
@@ -572,8 +572,9 @@ void fragment() {
 	float in_t = 0.0;
 	
 
-
-	for (int i = 0; i < MAX_STEPS; i++) {
+	int i = 0; //Usable i for coloration gradients
+	for (; i < MAX_STEPS; i++) {
+		
 		//prev_pos = pos; //currently unused and undeclared
 		//prev_d = d;
 		//prev_t = t;
@@ -658,8 +659,11 @@ debug.normal = vec3(0.0);
 debug.pos = vec3(0.0);
 debug.shape_id = 0;
 	
-	
-	
+	//optional: color missed rays
+	float stepcolor = float(i)/float(MAX_STEPS);
+	//ALBEDO = vec3(0.1);
+	ALBEDO *= vec3(stepcolor,0.0,stepcolor);
+
 	
 	if (hit) {
 		
@@ -674,7 +678,7 @@ debug.shape_id = 0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
 		ALBEDO *= hit_normal * 0.5 + 0.5;
-		ALBEDO *= float(MAX_STEPS/i)*0.5+0.5;
+		//ALBEDO += float(MAX_STEPS/i)*0.5+0.5;
 
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
 """
@@ -711,7 +715,9 @@ debug.shape_id = 0;
 		ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
-		discard;
+
+	
+	//discard;
 	}
 //ALBEDO = (camera_rotation / (2.0 * PI)) + 0.5;
 

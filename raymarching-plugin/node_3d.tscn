@@ -14,7 +14,7 @@ script = ExtResource("1_5clfm")
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0)
 script = ExtResource("1_t3n3c")
-max_steps = 425
+max_steps = 480
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.71763, -0.039075, 0)
@@ -43,13 +43,13 @@ modifier_type = 0
 size = Vector2(10, 10)
 
 [node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.51193, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.94312, 0, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 18
+shape_type = 0
 modifier_type = 12
-radius = 1.0
-height = 2.0
+size = Vector3(1, 1, 1)
+roundness = 0.0
 has_D_result_modifier = false
 has_local_p_modifier = false
 has_color_surface_modifier = false
