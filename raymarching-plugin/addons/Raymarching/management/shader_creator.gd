@@ -566,18 +566,23 @@ void fragment() {
 	vec3 pos = vec3(0.0);
 	float d = 0.0;
 	
-	//Previous raymarching step values for surface refinement, initialized.
+	//inside raymarching step values for surface refinement, initialized.
 	vec3 in_pos = ray_origin; 
 	float in_d = MAX_DISTANCE; 
 	float in_t = 0.0;
+	
+	//Previous values used for glitch reduction
+	vec3 prev_pos = ray_origin; 
+	float prev_d = MAX_DISTANCE; 
+	float prev_t = 0.0;
 	
 
 	int i = 0; //Usable i for coloration gradients
 	for (; i < MAX_STEPS; i++) {
 		
-		//prev_pos = pos; //currently unused and undeclared
-		//prev_d = d;
-		//prev_t = t;
+		prev_pos = pos;
+		prev_d = d;
+		prev_t = t;
 		
 		vec3 pos = ray_origin + current_rd * t;
 		d = map(pos);
@@ -639,7 +644,7 @@ if (ray_origin == pos){ // reset t when ro changes.
 			break;
 		}
 
-		t += d;
+		t += max(d,current_accuracy); //dont step smaller than accuracy requirement.
 		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update at end like original
 		if (t > MAX_DISTANCE) break;
 	}
@@ -662,7 +667,7 @@ debug.shape_id = 0;
 	//optional: color missed rays
 	float stepcolor = float(i)/float(MAX_STEPS);
 	//ALBEDO = vec3(0.1);
-	ALBEDO *= vec3(stepcolor,0.0,stepcolor);
+	//ALBEDO *= vec3(stepcolor,0.0,stepcolor);
 
 	
 	if (hit) {
@@ -677,7 +682,7 @@ debug.shape_id = 0;
 		ALPHA = 1.0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		ALBEDO *= hit_normal * 0.5 + 0.5;
+		//ALBEDO *= hit_normal * 0.5 + 0.5;
 		//ALBEDO += float(MAX_STEPS/i)*0.5+0.5;
 
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
@@ -717,7 +722,8 @@ debug.shape_id = 0;
 	} else {
 
 	
-	//discard;
+	
+	discard; //blanking missed rays values.
 	}
 //ALBEDO = (camera_rotation / (2.0 * PI)) + 0.5;
 

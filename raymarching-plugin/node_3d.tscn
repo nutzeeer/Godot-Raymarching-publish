@@ -14,25 +14,6 @@ script = ExtResource("1_5clfm")
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.999999, 0, 0, 0)
 script = ExtResource("1_t3n3c")
-max_steps = 480
-
-[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.71763, -0.039075, 0)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 42
-modifier_type = 5
-radius = 1.0
-thickness = 0.25
-has_D_result_modifier = false
-has_local_p_modifier = false
-has_color_surface_modifier = true
-has_forloop_modifier = null
-roughness = 0.0
-fresnel_power = 5.0
-reflection_distance = 100.0
-max_reflection_steps = 100
-metallic_color = Vector3(0.1, 0.1, 0.1)
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.18454, 0)
@@ -46,12 +27,45 @@ size = Vector2(10, 10)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.94312, 0, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
-shape_type = 0
+shape_type = 9
 modifier_type = 12
-size = Vector3(1, 1, 1)
-roundness = 0.0
+radius = 1.0
+height = 2.0
 has_D_result_modifier = false
 has_local_p_modifier = false
 has_color_surface_modifier = false
 has_forloop_modifier = null
 refraction_index = 1.5
+
+[node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 1
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = true
+has_forloop_modifier = null
+color = Vector3(1, 0.325, 1)
+intensity = 1.0
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2587, 0, 0)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 42
+modifier_type = 6
+radius = 1.0
+thickness = 0.25
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = true
+has_forloop_modifier = null
+roughness = 0.0
+fresnel_power = 5.0
+reflection_distance = 35.192
+max_reflection_steps = 121
+metallic_color = Vector3(1, 1, 0)
