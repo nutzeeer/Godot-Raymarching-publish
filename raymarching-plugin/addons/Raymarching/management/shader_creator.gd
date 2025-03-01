@@ -666,7 +666,7 @@ debug.shape_id = 0;
 	
 	//optional: color missed rays
 	float stepcolor = float(i)/float(MAX_STEPS);
-	//ALBEDO = vec3(0.1);
+	ALBEDO = vec3(0.1);
 	//ALBEDO *= vec3(stepcolor,0.0,stepcolor);
 
 	
@@ -682,7 +682,7 @@ debug.shape_id = 0;
 		ALPHA = 1.0;
 		//
 //ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		//ALBEDO *= hit_normal * 0.5 + 0.5;
+		ALBEDO *= hit_normal * 0.5 + 0.5;
 		//ALBEDO += float(MAX_STEPS/i)*0.5+0.5;
 
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;

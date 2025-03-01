@@ -6,7 +6,7 @@ const MODIFIER_PARAMETERS = [
 	{
 		"name": "color",
 		"type": TYPE_VECTOR3,
-		"default": Vector3(1.0, 1.0, 1.0),
+		"default": Vector3(1.0, 1.0, 0.0),
 		"description": "Surface color (RGB)"
 	},
 	{
@@ -26,7 +26,7 @@ func get_modifier_parameters() -> Array:
 func get_color_modifier_template() -> String:
 	return """
 	// Set surface color with intensity
-	ALBEDO = {color} * {intensity};
+	ALBEDO += {color} * {intensity};
 	"""
 
 # These return empty since we only modify the color
