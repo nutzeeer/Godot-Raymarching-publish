@@ -26,7 +26,7 @@ func get_modifier_parameters() -> Array:
 func get_color_modifier_template() -> String:
 	return """
 	// Set surface color with intensity
-	ALBEDO += {color} * {intensity};
+	ALBEDO *= {color} * {intensity};
 	"""
 
 # These return empty since we only modify the color

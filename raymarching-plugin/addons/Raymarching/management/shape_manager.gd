@@ -2,7 +2,9 @@
 extends Node3D
 class_name ShapeManager
 
-
+#There is no sub class definition here and idk if its necessary. 
+#Perhaps if there is a subnode like another shape manager to store information of the other sdf to output a unified result. Though that would require a lot of rewriting?
+	#Actually a subnode should retain its own parameters and the union needs to be defined seperately. Encompassing both the affected shapes and union type. Could be a for loop effect affecting the result. with its own map?
 
 signal shape_changed()
 signal properties_updated()

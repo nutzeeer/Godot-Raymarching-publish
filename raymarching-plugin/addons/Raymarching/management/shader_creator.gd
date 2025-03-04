@@ -141,7 +141,9 @@ class ShapeResource:
 					modifier_parameters[param_name] = manager.current_modifier.get(param_name)
 
 
-
+#Currently there is no class for modifiers. These are stored for each shape. 
+#To avoid code duplication in the shader the modifier is only added once through a generated list and then each shape with that modifier is added back. 
+#Though this part could be added to the start here to reference, to avoid doing it multiple times later.
 
 var shape_resources: Dictionary = {}  # node_id -> ShapeResource
 var raymarch_params: RaymarchParameters
@@ -151,9 +153,9 @@ func _init() -> void:
 	raymarch_params = RaymarchParameters.new()
 
 func add_shape_manager(manager: ShapeManager) -> int:
-	var resource = ShapeResource.new(manager, next_shape_id)  # Modify this line
-	shape_resources[next_shape_id] = resource  # Use next_shape_id as the key
-	next_shape_id += 1  # Increment the counter
+	var resource = ShapeResource.new(manager, next_shape_id)  
+	shape_resources[next_shape_id] = resource  # Use next_shape_id as the key. Using Godots internal node number causes a number overflow in glsl. This here gives each shape a small unique number.
+	next_shape_id += 1  # Incrementing the shape counter.
 	# Debug print to verify connection
 	print("Connecting shape_changed signal from manager to resource.update")
 	# Add connection for shape changes
@@ -169,7 +171,7 @@ func add_shape_manager(manager: ShapeManager) -> int:
 	
 	
 
-func generate_shader() -> String:
+func generate_shader() -> String: # Through direct code += additions and function calls. Some functions call sub-functions as they were expanded for multiple uses.
 	var shader_code = "shader_type spatial;\n"
 	shader_code += "render_mode unshaded;\n\n"
 	
@@ -182,11 +184,11 @@ func generate_shader() -> String:
 	# Add modifier includes and structures
 	#shader_code = integrate_modifiers(shader_code)
 	shader_code += """
-	// TODO: Implement ray modifiers
-	// Will include:
+	// Ray modifiers. (no longer TODO. its implemented.)
+	// Does include:
 	// - For loop modifiers for ray direction and position
 	// - Return line modifiers for SDF calculations
-	// See for_loop_modifiers.gd and sdf_return_line_modifiers.gd
+	// See for_loop_modifiers.gd and sdf_return_line_modifiers.gd. Actually no. See the modifiers folder for the general modifier base and template.
 	
 	
 struct DebugInfo {
@@ -198,7 +200,7 @@ struct DebugInfo {
 	int shape_id;
 };
 
-vec4 encode_debug_info(DebugInfo debug) {
+vec4 encode_debug_info(DebugInfo debug) { //currently unused
 	// Pack multiple values into RGBA
 	return vec4(debug.t, debug.d, float(debug.steps), float(debug.shape_id));
 }
@@ -206,33 +208,33 @@ vec4 encode_debug_info(DebugInfo debug) {
 	
 
 
-	shader_code += generate_pre_map_functions()
+	shader_code += generate_pre_map_functions() # Functions to be used in a custo map. Order or function definition is important in glsl
 
-	# Add SDF functions from all shapes
-	shader_code += generate_sdf_functions()
+	# Add SD functions from all shapes. Yes SDF functions means signed distance function functions, but im not changing all names.
+	shader_code += generate_sdf_functions() #SDFs as they are defined in their class
 
 		
 	# Add map function
-	shader_code += generate_all_maps()
+	shader_code += generate_all_maps() #All maps include standard surface detection, shape ID, and custom maps. p and d modifiers are incorporated here.
 	
 		# Add utility functions
-	shader_code += generate_utility_functions()
+	shader_code += generate_utility_functions()#Functions to be always used, below those are modifier defined functions to be used in color modifiers for example.
 
 	# Add main shader code
-	shader_code += generate_main_code()
+	shader_code += generate_main_code() #Fragment shader definition, for loop modifiers and color modifiers are incorporated here.
 	
 
 	
 	return shader_code
 
-func generate_uniforms() -> String:
+func generate_uniforms() -> String: #Uniforms are CPU calculated and the same for every pixel (uniform). Computationally cheaper to only do it once.
 	var code = """
 uniform sampler2D DEPTH_TEXTURE : hint_depth_texture, filter_linear_mipmap;
 uniform int MAX_STEPS;
 uniform float MAX_DISTANCE;
 uniform float SURFACE_DISTANCE;
 uniform float NORMAL_PRECISION;
-uniform float PHYSICS_TIME;  // Add this
+uniform float PHYSICS_TIME;  
 
 """
 	
@@ -242,7 +244,7 @@ uniform float PHYSICS_TIME;  // Add this
 	return code
 
 
-func generate_shape_uniforms(id: int) -> String:
+func generate_shape_uniforms(id: int) -> String: 
 	var resource = shape_resources[id]
 	var code = "\n// Shape %d uniforms\n" % resource.sequential_id
 	
@@ -275,7 +277,7 @@ func generate_modifier_uniforms(id: int) -> String:
 	
 	return code
 
-func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String:
+func generate_map_function(effect_map_name: String, shape_resources: Array, effect_map_template: String = "") -> String: #Generate a specific map accodring to a template. Incorporates d and p modifiers.
 	var template = effect_map_template
 	if template.is_empty():
 		template = """
@@ -295,11 +297,11 @@ float ${MAP_NAME}(vec3 p) {
 				shape_calculations += "        // Space modification\n"
 				var processed_p_template = shape.modifier_templates.p_template
 				for param_name in shape.modifier_parameters:
-					var uniform_name = "shape%d_mod_%s" % [shape.sequential_id, param_name]  # Use sequential_id
+					var uniform_name = "shape%d_mod_%s" % [shape.sequential_id, param_name]  # Use sequential_id instead of Godots node number to avoid number overflow.
 					processed_p_template = processed_p_template.replace("{%s}" % param_name, uniform_name)
 				shape_calculations +=  processed_p_template + "\n        vec3 modified_p = result; \n" 
 				shape_calculations += "        vec3 local_p = (inverse(shape%d_transform) * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
-				#CPU uniform transforms
+				#CPU uniform transforms or GPU Using the inverse is expensive and GPU.
 				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(modified_p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
 			else:
 				#shape_calculations += "        vec3 local_p = (shape%d_inverse_transform * vec4(p, 1.0)).xyz;\n" % shape.sequential_id  # Use sequential_id
@@ -331,7 +333,7 @@ float ${MAP_NAME}(vec3 p) {
 func generate_uniform_declaration(id: int, name: String, param: ShapeParameter) -> String:
 	return param.get_uniform_declaration() + "shape" + str(id) + "_" + name + ";\n"
 
-func integrate_modifiers(code: String) -> String:
+func integrate_modifiers(code: String) -> String: #This seems deprecated.
 	return """
 #include "for_loop_modifiers.gdshaderinc"
 
@@ -342,8 +344,8 @@ vec3 apply_modifiers(vec3 p, RayModifiers mods) {
 }
 """.replace("${code}", code)
 
-func generate_pre_map_functions() -> String:
-	var code = ""
+func generate_pre_map_functions() -> String: # Functions to be used in the map. Modifier defined, shape modifier functions. 
+	var code = "//Pre map functions \n"
 	var pre_map_functions = {}  # Dictionary to store unique pre_map_functions
 	
 	for id in shape_resources:
@@ -362,8 +364,10 @@ func generate_pre_map_functions() -> String:
 	
 	return code
 
-func generate_utility_functions() -> String:
+func generate_utility_functions() -> String: #Functions to be always used, below those are modifier defined functions to be used in color modifiers for example.
 	var code = """
+	//Utility functions that 
+	
 vec3 getNormal(vec3 p) {
 	// Use smaller epsilon based on distance from point
 	float eps = NORMAL_PRECISION * length(p);
@@ -456,14 +460,14 @@ float get_soft_shadow(vec3 ro, vec3 rd, float min_t, float max_t, float k) {
 
 
 
-func generate_sdf_functions() -> String:
+func generate_sdf_functions() -> String: #SDF functions as defined in the SDF class.
 	var code = ""
 	for resource in shape_resources.values():
 		if resource.sdf_code:
 			code += resource.sdf_code + "\n"
 	return code
 	
-func generate_all_maps() -> String:
+func generate_all_maps() -> String: #Generating maps for surface detection, shape identification, and custom maps from modifiers.
 	var shader_code = ""
 	
 	# Create groups for shapes by their special effects
@@ -507,7 +511,7 @@ func generate_all_maps() -> String:
 	for shapes in map_groups_by_effect.values():
 		effect_shapes.append_array(shapes)
 		
-		#Shape identification during ray marching for loop
+		#Shape identification during ray marching for loop. Only effect shapes need ID.
 	shader_code += generate_map_function("effect_id", effect_shapes, id_template)
 	
 		#All shape identification in final coloring application
@@ -518,11 +522,11 @@ func generate_all_maps() -> String:
 	
 	return shader_code
 
-func get_shape_function_name(resource: ShapeResource) -> String:
+func get_shape_function_name(resource: ShapeResource) -> String: #Idk where I use this. Not in this class at least. Is there other class function calling? idk.
 	var shape = resource.manager.get_current_shape()
 	return "sd" + shape.get_class() if shape else "sdSphere"
 
-func get_shape_parameters_string(resource: ShapeResource) -> String:
+func get_shape_parameters_string(resource: ShapeResource) -> String: #Probably to build the sdf call? This isnt called anywhere
 	var params = []
 	for param_name in resource.parameters:
 		if param_name not in ["position", "rotation", "scale", "inverse_transform"]:
@@ -537,7 +541,7 @@ void vertex() {
 
 void fragment() {
 
-	ALBEDO = vec3(0.0);
+	ALBEDO = vec3(1.0);
 	
 	vec3 weird_uv = vec3(SCREEN_UV * 2.0 - 1.0, 0.0);
 	vec4 camera = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * vec4(weird_uv, 1.0);
@@ -614,7 +618,7 @@ if (ray_origin == pos){ // reset t when ro changes.
 				// Apply for-loop modifications based on shape ID
 		int current_shape_id = effect_id(pos, current_accuracy);
 		"""
-	# Process for_loop templates by shape
+	# Process for_loop templates by shape. #For loop template functions could need the ID system, to avoid redeclarations for similar effects. As its currently erroring on that.
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.modifier_templates.forloop_template:
@@ -646,7 +650,7 @@ if (ray_origin == pos){ // reset t when ro changes.
 		if (t > MAX_DISTANCE) break;
 	}
 	
-	vec3 camera_rotation;
+	vec3 camera_rotation; //Used for view directional color.
 camera_rotation.x = atan(INV_VIEW_MATRIX[1][2], INV_VIEW_MATRIX[2][2]);
 camera_rotation.y = -asin(INV_VIEW_MATRIX[0][2]);
 camera_rotation.z = atan(INV_VIEW_MATRIX[0][1], INV_VIEW_MATRIX[0][0]);
@@ -661,7 +665,7 @@ debug.normal = vec3(0.0);
 debug.pos = vec3(0.0);
 debug.shape_id = 0;
 	
-	//optional: color missed rays
+	//optional: color missed rays to see expensive pixels. Needs discard upon missed ray to be turned off with //.
 	float stepcolor = float(i)/float(MAX_STEPS);
 	//ALBEDO = vec3(0.1);
 	//ALBEDO *= vec3(stepcolor,0.0,stepcolor);
@@ -679,7 +683,7 @@ debug.shape_id = 0;
 		ALPHA = 1.0;
 		//
 		//ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		//ALBEDO *= hit_normal ;//* 0.5 + 0.5;
+		ALBEDO *= hit_normal * 0.5 + 0.5;
 		//ALBEDO += float(MAX_STEPS/i)*0.5+0.5;
 
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
@@ -687,8 +691,6 @@ debug.shape_id = 0;
 	
 	# In generate_main_code()
 	# Apply color/surface modifications
-# In generate_main_code()
-# Apply color/surface modifications
 	for id in shape_resources:
 		var resource = shape_resources[id]
 		if resource.modifier_templates.color_template:
@@ -708,19 +710,19 @@ debug.shape_id = 0;
 	""" % [id, id, processed_color]
 	code += """
 		
-		
+		//Standard lighting to make standard shapes without effects niceer.
 		// Calculate lighting
 		vec3 light_dir = normalize(vec3(1.0, 1.0, 1.0));
 		float diffuse = max(0.0, dot(hit_normal, light_dir));
 		float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
 		//ALBEDO *= current_accuracy*10.0;
-		//ALBEDO *= (diffuse * shadow + 0.1);
+		ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
 
 	
 	
-	discard; //blanking missed rays values.
+	discard; //blanking missed rays values. comment to visualize color missed rays.
 	}
 //ALBEDO = (camera_rotation / (2.0 * PI)) + 0.5;
 
@@ -729,7 +731,7 @@ debug.shape_id = 0;
 	return code
 	
 	
-func wrap_forloop_template(template: String, map_name: String, shape_id: int) -> String:
+func wrap_forloop_template(template: String, map_name: String, shape_id: int) -> String: #Where is this used? idk.
 	if template == "" or map_name == "":
 		return ""
 		
@@ -746,7 +748,7 @@ func wrap_forloop_template(template: String, map_name: String, shape_id: int) ->
 	""" % [map_name, shape_id, template]
 
 # Update update_shader_parameters
-func update_shader_parameters(material: ShaderMaterial) -> void:
+func update_shader_parameters(material: ShaderMaterial) -> void: #Update everything
 	# Raymarching parameters
 	material.set_shader_parameter("MAX_STEPS", raymarch_params.max_steps)
 	material.set_shader_parameter("MAX_DISTANCE", raymarch_params.max_distance)
