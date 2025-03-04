@@ -536,6 +536,9 @@ void vertex() {
 }
 
 void fragment() {
+
+	ALBEDO = vec3(0.0);
+	
 	vec3 weird_uv = vec3(SCREEN_UV * 2.0 - 1.0, 0.0);
 	vec4 camera = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * vec4(weird_uv, 1.0);
 	
@@ -548,12 +551,6 @@ void fragment() {
 	vec3 ray_origin = (INV_VIEW_MATRIX * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 	vec3 ray_dir = normalize(camera.xyz);
 	vec3 current_rd = ray_dir;
-	
-	/*
-	// Apply modifiers
-	ray_origin = apply_modifiers(ray_origin, RayModifiers);
-	ray_dir = apply_modifiers(ray_dir, RayModifiers);
-	*/
 	
 	//Raymarching values initialized outside to use them outside the loop
 	float t = 0.0;
@@ -571,7 +568,7 @@ void fragment() {
 	float in_d = MAX_DISTANCE; 
 	float in_t = 0.0;
 	
-	//Previous values used for glitch reduction
+	//Previous values
 	vec3 prev_pos = ray_origin; 
 	float prev_d = MAX_DISTANCE; 
 	float prev_t = 0.0;
@@ -666,7 +663,7 @@ debug.shape_id = 0;
 	
 	//optional: color missed rays
 	float stepcolor = float(i)/float(MAX_STEPS);
-	ALBEDO = vec3(0.1);
+	//ALBEDO = vec3(0.1);
 	//ALBEDO *= vec3(stepcolor,0.0,stepcolor);
 
 	
@@ -681,8 +678,8 @@ debug.shape_id = 0;
 	debug.shape_id = shape_id;
 		ALPHA = 1.0;
 		//
-//ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
-		ALBEDO *= hit_normal * 0.5 + 0.5;
+		//ALBEDO = mix(ALBEDO,vec3(0.0),0.5);
+		//ALBEDO *= hit_normal ;//* 0.5 + 0.5;
 		//ALBEDO += float(MAX_STEPS/i)*0.5+0.5;
 
 		//ALBEDO = hit_normal * 0.5 + 0.5 * t;
@@ -717,7 +714,7 @@ debug.shape_id = 0;
 		float diffuse = max(0.0, dot(hit_normal, light_dir));
 		float shadow = get_soft_shadow(hit_pos, light_dir, 0.0001, 1000.0, 32.0);
 		//ALBEDO *= current_accuracy*10.0;
-		ALBEDO *= (diffuse * shadow + 0.1);
+		//ALBEDO *= (diffuse * shadow + 0.1);
 		//ALBEDO = INV_VIEW_MATRIX[0].xyz; //Directional color
 	} else {
 

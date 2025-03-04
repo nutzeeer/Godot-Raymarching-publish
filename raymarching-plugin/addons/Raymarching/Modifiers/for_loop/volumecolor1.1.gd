@@ -33,24 +33,12 @@ func get_modifier_parameters() -> Array:
 func get_forloop_modifier_template() -> String:
 	return """
 
-	
-	// Double the accuracy for volumes to detect them before surfaces
-	if (d < current_accuracy * 2.0) {
-		
-	// Check for intersection with volume
-	float vol_d = map_volume(pos);
-
-	if (vol_d < current_accuracy*2.0){
-		
 		vec3 addedColor = {volume_color} * {color_strength} * (t- prev_t); // add color based on step distance
 		ALBEDO += addedColor;
-		t += max(abs(vol_d),current_accuracy*{step_multiplier});
+		t += max(d,current_accuracy*{step_multiplier});
 		//continue marching to perhaps hit surface in volume. volume should not be a march ending effect.
-		d+= vol_d; //adding the volumetric effect to not have d reach below the accuracy threshold with volume present. (if another object overlaps it )
-		d= min(vol_d,d); //adjusting d to not hit the volumetric object. maybe a problem to not hit another object overlapping still.
-		
-	}
-	}
+		continue;
+	
 	"""
 
 func get_custom_map_name() -> String:
