@@ -1,0 +1,20 @@
+effect ID for functions like its for sdfs. to avoid function redefinition errors for same name functions. $S %id replacement.
+
+effects as child nodes of shape managers? shape manager could collect and present info like it was before. This way it would be easier to apply multiple effects to a shape and not clutter the shape manager node with settings.
+
+shape managers as child nodes of shape managers? for shape on shape operations. The top most shape manager under the raymarch camera would present the info to the shader generator. Shapes would be unified under the top most shape managers transforms. would be a single shape.
+
+
+todo:
+bounding volume hierarchy to detect inactive pixels to save resources. (parameter change detection?)
+shape on shape interactions. (doable through defining in singular SDF. but thats as one object then. but leveraging node system is about not editing code directly.)
+working export ability (for demos for example). -> setting parameters on export.
+scene change shader rebuilding. (also on play only shows node_3d scene not others.)
+mesh depth integration.
+multiple modifier selection. (through modifier as child nodes perhaps. no inspector clutter.
+4D sdf shapes for physics, and more.
+
+__
+later cus its complicated
+preloading: load all shapes into the shader to have them add and removable without a shader rebuild.
+idk how developing is supposed to be in godot so the raymarching plugin structure should not be a hindrance in the node system and allow for the same freedom as is usually the case. needs communication with devs. or reading documentation.

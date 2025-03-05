@@ -30,10 +30,10 @@ done:
 for loop modifier refraction repair for multiple shapes.(takes first shape parameters for all).
 
 todo:
-bounding volume hierarchy to detect inactive pixels to save resources. 
-shape on shape interactions. (doable through defining in singular SDF. but thats as one object then.)
+bounding volume hierarchy to detect inactive pixels to save resources. (parameter change detection?)
+shape on shape interactions. (doable through defining in singular SDF. but thats as one object then. but leveraging node system is about not editing code directly.)
 working export ability (for demos for example). -> setting parameters on export.
 scene change shader rebuilding. (also on play only shows node_3d scene not others.)
 mesh depth integration.
-multiple modifier selection.
-4D sdf shapes for physics.
+multiple modifier selection. (through modifier as child nodes perhaps. no inspector clutter.
+4D sdf shapes for physics, and more.
