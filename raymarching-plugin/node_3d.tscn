@@ -13,15 +13,7 @@ script = ExtResource("1_5clfm")
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
-max_steps = 1927
-
-[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.00837, 0)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 36
-modifier_type = 0
-height = 0.0
+surface_distance = 0.0001
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.28005, 0.0189414, -2.30974)
@@ -87,3 +79,12 @@ has_forloop_modifier = null
 refraction_index = 1.5
 albedo_color = Vector3(1, 0.3, 0)
 albedo_strength = 0.5
+
+[node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2802, 0, 0.38535)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 0
+size = Vector3(1, 1, 1)
+roundness = 0.0

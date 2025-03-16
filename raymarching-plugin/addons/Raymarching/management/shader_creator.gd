@@ -571,6 +571,7 @@ void fragment() {
 	vec3 in_pos = ray_origin; 
 	float in_d = MAX_DISTANCE; 
 	float in_t = 0.0;
+	float sumt = 0.0; //total distance traveled
 	
 	//Previous values
 	vec3 prev_pos = ray_origin; 
@@ -646,7 +647,8 @@ if (ray_origin == pos){ // reset t when ro changes.
 		}
 
 		t += max(d,current_accuracy); //dont step smaller than accuracy requirement.
-		current_accuracy = t * SURFACE_DISTANCE * pixel_scale;  // Update at end like original
+		sumt = t + prev_t;
+		current_accuracy = sumt * SURFACE_DISTANCE * pixel_scale;  // Update at end like original
 		if (t > MAX_DISTANCE) break;
 	}
 	
