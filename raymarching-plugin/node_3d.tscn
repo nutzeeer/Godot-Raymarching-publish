@@ -13,23 +13,27 @@ script = ExtResource("1_5clfm")
 
 [node name="RaymarchCamera" type="Camera3D" parent="Node3D"]
 script = ExtResource("1_t3n3c")
+max_steps = 200
+max_distance = 100.0
 surface_distance = 0.0001
 
 [node name="ShapeManager2" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.28005, 0.0189414, -2.30974)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18403, 0.0189414, -2.676)
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 0
-modifier_type = 14
+modifier_type = 39
 size = Vector3(1, 1, 1)
 roundness = 0.0
-has_D_result_modifier = false
+has_D_result_modifier = true
 has_local_p_modifier = false
-has_color_surface_modifier = false
+has_color_surface_modifier = true
 has_forloop_modifier = null
-refraction_index = 1.5
-albedo_color = Vector3(0.1, 0.3, 3)
-albedo_strength = 0.5
+choppiness = 0.5
+foam_intensity = 0.4
+water_color = Vector3(0.1, 0.3, 0.4)
+wave_scale = 3.0
+depth_fade = 2.0
 
 [node name="ShapeManager3" type="Node3D" parent="Node3D/RaymarchCamera"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.31758, 0)
@@ -44,47 +48,63 @@ has_local_p_modifier = false
 has_color_surface_modifier = true
 has_forloop_modifier = null
 roughness = 0.0
-fresnel_power = 5.0
+fresnel_power = 1.0
 reflection_distance = 100.0
 max_reflection_steps = 100
 metallic_color = Vector3(0.1, 0.1, 0.1)
 
 [node name="ShapeManager4" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2967, 0, -4.93353)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.62712, 0, -1.58647)
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 9
-modifier_type = 14
+modifier_type = 26
 radius = 1.0
-height = 2.0
+height = 1.2
 has_D_result_modifier = false
 has_local_p_modifier = false
 has_color_surface_modifier = false
 has_forloop_modifier = null
-refraction_index = 1.5
-albedo_color = Vector3(0.1, 1, 0)
-albedo_strength = 0.5
-
-[node name="ShapeManager5" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.11526, 0, -1.46663)
-top_level = true
-script = ExtResource("2_jj8wy")
-shape_type = 38
-modifier_type = 14
-radius = 1.0
-has_D_result_modifier = false
-has_local_p_modifier = false
-has_color_surface_modifier = false
-has_forloop_modifier = null
-refraction_index = 1.5
-albedo_color = Vector3(1, 0.3, 0)
-albedo_strength = 0.5
+volume_color = Vector3(0.3, 0.6, 0.9)
+density = 5.13
+step_detail = 10.0
 
 [node name="ShapeManager" type="Node3D" parent="Node3D/RaymarchCamera"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.2802, 0, 0.38535)
+transform = Transform3D(0.643857, 0.553627, 0.528153, 0, 0.690264, -0.723558, -0.765146, 0.465867, 0.444431, 2.7198, 0, 1.38535)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 14
+size = Vector3(1, 1, 1)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = false
+has_forloop_modifier = null
+refraction_index = 1.5
+albedo_color = Vector3(0.1, 0.3, 0.8)
+albedo_strength = 0.5
+
+[node name="ShapeManager6" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0)
+top_level = true
+script = ExtResource("2_jj8wy")
+shape_type = 0
+modifier_type = 1
+size = Vector3(0.0001, 10, 10)
+roundness = 0.0
+has_D_result_modifier = false
+has_local_p_modifier = false
+has_color_surface_modifier = true
+has_forloop_modifier = null
+color = Vector3(1, 0, 0)
+intensity = 1.0
+
+[node name="ShapeManager5" type="Node3D" parent="Node3D/RaymarchCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -7, 0)
 top_level = true
 script = ExtResource("2_jj8wy")
 shape_type = 0
 modifier_type = 0
-size = Vector3(1, 1, 1)
+size = Vector3(10, 0.0001, 10)
 roundness = 0.0

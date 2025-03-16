@@ -724,7 +724,7 @@ debug.shape_id = 0;
 
 	
 	ALBEDO -= 0.5;
-	//discard; //blanking missed rays values. comment to visualize color missed rays.
+	discard; //blanking missed rays values. comment to visualize color missed rays.
 	}
 //ALBEDO = (camera_rotation / (2.0 * PI)) + 0.5;
 
